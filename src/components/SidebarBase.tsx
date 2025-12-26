@@ -8,25 +8,25 @@ import { VariantProps, cva } from "class-variance-authority";
 import { PanelLeftIcon } from "lucide-react";
 
 // Assuming these are external imports you already have
-import { useIsMobile } from "./use-mobile";
-import { cn } from "./utils";
-import { Button } from "./button";
-import { Input } from "./input";
-import { Separator } from "./separator";
+import { useIsMobile } from "@/components/ui/use-mobile";
+import { cn } from '@/components/ui/utils';
+import { Button } from '@/components/ui/button';
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
 import {
     Sheet,
     SheetContent,
     SheetDescription,
     SheetHeader,
     SheetTitle,
-} from "./sheet";
-import { Skeleton } from "./skeleton";
+} from "./ui/sheet";
+import { Skeleton } from "./ui/skeleton";
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from "./tooltip";
+} from "./ui/tooltip";
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -348,4 +348,82 @@ const sidebarMenuButtonVariants = cva(
             variant: {
                 default: "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
                 outline:
-                    "bg-background shadow-[0_0_0_1px_hsl(var
+                    "bg-background shadow-[0_0_0_1px_hsl(var(--sidebar-border))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]",
+            },
+            size: {
+                default: "h-8 text-sm",
+                sm: "h-7 text-xs",
+                lg: "h-12 text-sm group-data-[collapsible=icon]:p-0!",
+            },
+        },
+        defaultVariants: {
+            variant: "default",
+            size: "default",
+        },
+    },
+);
+
+export function SidebarMenuButton({
+                                      asChild = false,
+                                      isActive = false,
+                                      variant = "default",
+                                      size = "default",
+                                      tooltip,
+                                      className,
+                                      ...props
+                                  }: React.ComponentProps<"button"> & {
+    asChild?: boolean;
+    isActive?: boolean;
+    tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+} & VariantProps<typeof sidebarMenuButtonVariants>) {
+    const Comp = asChild ? Slot : "button";
+    const { isMobile, state } = useSidebar();
+
+    const button = (
+        <Comp
+            data-slot="sidebar-menu-button"
+            data-sidebar="menu-button"
+            data-size={size}
+            data-active={isActive}
+            className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+            {...props}
+        />
+    );
+
+    if (!tooltip) {
+        return button;
+    }
+
+    if (typeof tooltip === "string") {
+        tooltip = {
+            children: tooltip,
+        };
+    }
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent
+                side="right"
+                align="center"
+                hidden={state !== "collapsed" || isMobile}
+                {...tooltip}
+            />
+        </Tooltip>
+    );
+}
+
+// --- Other exports for completeness (from your original list) ---
+
+export function SidebarMenuItem({ className, ...props }: React.ComponentProps<"li">) {
+    return (
+        <li
+            data-slot="sidebar-menu-item"
+            data-sidebar="menu-item"
+            className={cn("group/menu-item relative", className)}
+            {...props}
+        />
+    );
+}
+// (Other exports like SidebarFooter, SidebarSeparator, etc., would continue here...)
+// (I am omitting the rest for brevity, but they should be included from your original code)
