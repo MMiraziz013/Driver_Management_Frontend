@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Loader2, RefreshCw, CarFront, Trash2 } from 'lucide-react';
+import { Plus, Loader2, RefreshCw, CarFront, Trash2, Pencil } from 'lucide-react';
 import { AddCarModal } from './AddCarModal';
+import {EditCarModal} from "@/components/cars/EditCarModal";
 
 // Matching your C# GetVehicleDto
 interface Vehicle {
@@ -9,6 +10,8 @@ interface Vehicle {
     model: string | null;
     color: string;
     requiredDriverCategory: string | number;
+    vehicleTypeId?: number;
+    vehicleTypeName?: string;
 }
 
 /**
@@ -19,7 +22,6 @@ const getCategoryLabel = (category: string | number) => {
     const val = String(category).trim().toUpperCase();
 
     // Map the C# Enum Integer Values (1=B, 2=C, 3=D)
-    // Also handling "0" if your DB has a fallback value
     const enumMap: Record<string, string> = {
         "1": "B",
         "2": "C",
@@ -52,7 +54,9 @@ export function CarsPage() {
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
 
     const API_URL = 'http://localhost:5147/api/vehicles';
 
@@ -75,12 +79,21 @@ export function CarsPage() {
         }
     };
 
+    const handleEdit = (vehicle: Vehicle) => {
+        setSelectedVehicle(vehicle);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+        setSelectedVehicle(null);
+    };
+
     const handleDelete = async (id: number) => {
         if (!window.confirm("Are you sure you want to delete this vehicle?")) return;
 
         try {
-            // Using Query String format to match your Swagger/Backend logic
-            const response = await fetch(`${API_URL}?id=${id}`, {
+            const response = await fetch(`${API_URL}/${id}`, {
                 method: 'DELETE',
             });
 
@@ -120,7 +133,7 @@ export function CarsPage() {
                         <RefreshCw className="w-5 h-5" />
                     </button>
                     <button
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => setIsAddModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
                     >
                         <Plus className="w-5 h-5" />
@@ -173,17 +186,25 @@ export function CarsPage() {
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                        <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${getCategoryStyles(car.requiredDriverCategory)}`}>
-                                            {getCategoryLabel(car.requiredDriverCategory)}
-                                        </span>
+                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${getCategoryStyles(car.requiredDriverCategory)}`}>
+                                        {getCategoryLabel(car.requiredDriverCategory)}
+                                    </span>
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button
-                                        onClick={() => handleDelete(car.id)}
-                                        className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <button
+                                            onClick={() => handleEdit(car)}
+                                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                                        >
+                                            <Pencil className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(car.id)}
+                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -198,9 +219,18 @@ export function CarsPage() {
                 </div>
             </div>
 
+            {/* Add Modal */}
             <AddCarModal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSuccess={fetchVehicles}
+            />
+
+            {/* Edit Modal */}
+            <EditCarModal
+                isOpen={isEditModalOpen}
+                vehicle={selectedVehicle}
+                onClose={handleCloseEditModal}
                 onSuccess={fetchVehicles}
             />
         </div>
