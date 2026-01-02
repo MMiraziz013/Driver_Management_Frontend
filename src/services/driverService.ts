@@ -33,7 +33,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
  */
 export async function getAllDrivers(
     pageNumber: number = 1,
-    pageSize: number = 20
+    pageSize: number = 30
 ): Promise<DriverFront[]> { // NOTE: Still promises an array to the component
 
     const queryParams = new URLSearchParams({
