@@ -1,18 +1,23 @@
-// app/page.tsx (FINAL CORRECTED VERSION)
+// app/page.tsx
 
 "use client";
 
 import React, { useState } from 'react';
 
-// IMPORT ONLY THE NECESSARY STRUCTURAL COMPONENTS AND YOUR STYLED SIDEBAR
-// These components (Provider, Inset, Trigger) are assumed to be re-exported 
-// from your application's wrapper component file: @/components/Sidebar
+// Auth imports - useAuth will work because AuthProvider is in layout.tsx
+import { useAuth } from '@/auth/AuthContext';
+import { LoginPage } from '@/auth/LoginPage';
+import { RegisterPage } from '@/auth/RegisterPage';
+import { NoPermissionBanner } from '@/auth/PermissionComponents';
+import { Loader2 } from 'lucide-react';
+
+// Sidebar components
 import {
     SidebarProvider,
-    Sidebar as StyledSidebar, // Rename to avoid conflict with the component definition below
+    Sidebar as StyledSidebar,
     SidebarInset,
     SidebarTrigger,
-} from '@/components/Sidebar'; // <-- Import from your styled wrapper file
+} from '@/components/Sidebar';
 
 // Import all page and header components
 import { Header } from '@/components/Header';
@@ -24,22 +29,31 @@ import { SettingsPage } from "@/components/settings/SettingsPage";
 
 type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings';
 
-// --- REMOVED SidebarContent ---
-// The menu content logic (SidebarContent) is now encapsulated inside
-// the StyledSidebar component (in @/components/Sidebar.tsx)
+// Loading component
+function LoadingScreen() {
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 flex items-center justify-center">
+            <div className="text-center">
+                <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mx-auto mb-4" />
+                <p className="text-gray-500">Loading...</p>
+            </div>
+        </div>
+    );
+}
 
 // Helper wrapper to ensure the Header works inside SidebarInset
 function HeaderWrapper({ children }: { children: React.ReactNode }) {
     return (
-        // This div handles the padding/border and centers the items
         <div className="flex items-center p-4 border-b">
             {children}
         </div>
     );
 }
 
-export default function App() {
-    const [currentPage, setCurrentPage] = useState<Page>('drivers');
+// Main authenticated app content
+function AuthenticatedApp() {
+    const [currentPage, setCurrentPage] = useState<Page>('reports');
+    const { canManage } = useAuth();
 
     const renderPage = () => {
         switch (currentPage) {
@@ -59,22 +73,17 @@ export default function App() {
     };
 
     return (
-        // 1. Wrap the entire application in the provider for state management
         <SidebarProvider>
-
-            {/* 2. Use your custom styled Sidebar component */}
             <StyledSidebar currentPage={currentPage} onPageChange={setCurrentPage} />
 
-            {/* 3. SidebarInset wraps the main content area (Header + main) */}
             <SidebarInset className="flex flex-col overflow-hidden bg-slate-50">
-
-                {/* 4. HeaderWrapper contains the mobile trigger */}
                 <HeaderWrapper>
-                    {/* Trigger is only visible on mobile (small screens) */}
                     <SidebarTrigger className="md:hidden mr-4" />
-                    {/* Your standard Header component */}
                     <Header />
                 </HeaderWrapper>
+
+                {/* Show banner for view-only users */}
+                {!canManage() && <NoPermissionBanner />}
 
                 <main className="flex-1 overflow-y-auto p-8">
                     {renderPage()}
@@ -82,4 +91,26 @@ export default function App() {
             </SidebarInset>
         </SidebarProvider>
     );
+}
+
+// Main page component with auth gate
+export default function App() {
+    const { isAuthenticated, isLoading } = useAuth();
+    const [showRegister, setShowRegister] = useState(false);
+
+    // Show loading while checking auth state
+    if (isLoading) {
+        return <LoadingScreen />;
+    }
+
+    // Not authenticated - show login or register
+    if (!isAuthenticated) {
+        if (showRegister) {
+            return <RegisterPage onSwitchToLogin={() => setShowRegister(false)} />;
+        }
+        return <LoginPage onSwitchToRegister={() => setShowRegister(true)} />;
+    }
+
+    // Authenticated - show the app
+    return <AuthenticatedApp />;
 }
