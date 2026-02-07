@@ -12,7 +12,9 @@ import {
     Fuel,
     ChevronDown,
     Lock,
-    CheckCircle
+    CheckCircle,
+    Map,
+    ClipboardList
 } from "lucide-react";
 import { CreateReportPeriodModal } from "./CreateReportPeriodModal";
 import { UploadTripsModal } from "./UploadTripsModal";
@@ -31,14 +33,29 @@ interface ReportPeriod {
     tripCount?: number;
     assignedCount?: number;
     conflictCount?: number;
-    // Unified finalization status
     isFinalized?: boolean;
     finalizedAt?: string;
-    // Individual statuses (for backward compatibility)
     isFuelFinalized?: boolean;
     fuelFinalizedAt?: string;
     isAssignmentFinalized?: boolean;
     assignmentFinalizedAt?: string;
+}
+
+interface JourneyDto {
+    journeyNumber: number;
+    date: string;
+    driverId: number;
+    driverName: string;
+    vehicleId: number;
+    vehiclePlate: string;
+    vehicleModel: string;
+    departureTime: string;
+    returnTime: string;
+    totalDistanceKm: number;
+    totalFuelConsumed: number;
+    tripCount: number;
+    companies: string;
+    confNumbers: string[];
 }
 
 export function ReportsPage() {
@@ -53,7 +70,12 @@ export function ReportsPage() {
     const [isUploadGasModalOpen, setIsUploadGasModalOpen] = useState(false);
     const [isFuelModalOpen, setIsFuelModalOpen] = useState(false);
     const [isFinalizeModalOpen, setIsFinalizeModalOpen] = useState(false);
+    const [isJourneysModalOpen, setIsJourneysModalOpen] = useState(false);
     const [selectedPeriod, setSelectedPeriod] = useState<ReportPeriod | null>(null);
+
+    // Journeys data
+    const [journeys, setJourneys] = useState<JourneyDto[]>([]);
+    const [journeysLoading, setJourneysLoading] = useState(false);
 
     // Dropdown menus
     const [openUploadMenuId, setOpenUploadMenuId] = useState<number | null>(null);
@@ -100,7 +122,6 @@ export function ReportsPage() {
         return () => document.removeEventListener('click', handleClickOutside);
     }, []);
 
-    // Helper to check if period is finalized (supports both old and new field names)
     const isPeriodFinalized = (period: ReportPeriod): boolean => {
         return period.isFinalized || period.isFuelFinalized || false;
     };
@@ -215,6 +236,73 @@ export function ReportsPage() {
         }
     };
 
+    // Download waybill report (Путевой лист)
+    const handleDownloadWaybill = async (periodId: number, period: ReportPeriod) => {
+        setOpenExportMenuId(null);
+        setProcessingId(periodId);
+        setProcessingAction("waybill");
+
+        try {
+            const response = await fetch(`${API_BASE}/reports/export-waybill/${periodId}`);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                alert(`❌ Export failed: ${errorText || "Make sure assignments were generated first."}`);
+                return;
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // Create filename with Russian date format
+            const startDate = new Date(period.startDate);
+            const endDate = new Date(period.endDate);
+            const formatDate = (d: Date) => d.toISOString().split('T')[0];
+            a.download = `Путевой_лист_${formatDate(startDate)}_${formatDate(endDate)}.xlsx`;
+
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+        } catch (error) {
+            console.error("Download error:", error);
+            alert("❌ Download failed.");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction("");
+        }
+    };
+
+    // Fetch journeys for a period
+    const handleViewJourneys = async (period: ReportPeriod) => {
+        setSelectedPeriod(period);
+        setIsJourneysModalOpen(true);
+        setJourneysLoading(true);
+        setOpenExportMenuId(null);
+
+        try {
+            const response = await fetch(`${API_BASE}/reports/journeys/${period.id}`);
+
+            if (response.ok) {
+                const result = await response.json();
+                // Handle both wrapped response { data: [...] } and direct array [...]
+                const journeysData = Array.isArray(result) ? result : (result.data || result || []);
+                setJourneys(journeysData);
+            } else {
+                alert("❌ Failed to load journeys. Make sure assignments were run first.");
+                setJourneys([]);
+            }
+        } catch (error) {
+            console.error("Fetch journeys error:", error);
+            alert("❌ Failed to load journeys");
+            setJourneys([]);
+        } finally {
+            setJourneysLoading(false);
+        }
+    };
+
     // Open modals
     const handleOpenUploadTrips = (periodId: number) => {
         setSelectedPeriod(periods.find(p => p.id === periodId) || null);
@@ -240,7 +328,6 @@ export function ReportsPage() {
     };
 
     const getStatusBadge = (period: ReportPeriod) => {
-        // If period is finalized, show that prominently
         if (isPeriodFinalized(period)) {
             return (
                 <span className="inline-flex items-center gap-1.5 py-1 px-2.5 rounded-full text-xs font-medium border bg-emerald-50 border-emerald-200 text-emerald-700">
@@ -477,16 +564,21 @@ export function ReportsPage() {
                                             <div className="relative" data-dropdown-export>
                                                 <button
                                                     onClick={() => setOpenExportMenuId(openExportMenuId === period.id ? null : period.id)}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                                                    disabled={processingId === period.id && processingAction === "waybill"}
+                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors disabled:opacity-50"
                                                 >
-                                                    <Download className="w-4 h-4" />
+                                                    {processingId === period.id && processingAction === "waybill" ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : (
+                                                        <Download className="w-4 h-4" />
+                                                    )}
                                                     Export
                                                     <ChevronDown className="w-3 h-3" />
                                                 </button>
 
                                                 {openExportMenuId === period.id && (
                                                     <div
-                                                        className="absolute right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
+                                                        className="absolute right-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50"
                                                         data-dropdown-export
                                                     >
                                                         <button
@@ -501,7 +593,31 @@ export function ReportsPage() {
                                                             className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                                                         >
                                                             <Fuel className="w-4 h-4 text-amber-500" />
-                                                            Fuel Report (CSV)
+                                                            Fuel Report (ZIP)
+                                                        </button>
+
+                                                        <div className="border-t border-gray-100 my-1"></div>
+
+                                                        <button
+                                                            onClick={() => handleDownloadWaybill(period.id, period)}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                        >
+                                                            <ClipboardList className="w-4 h-4 text-emerald-500" />
+                                                            <div>
+                                                                <div>Путевой лист (Waybill)</div>
+                                                                <div className="text-xs text-gray-400">Grouped by vehicle</div>
+                                                            </div>
+                                                        </button>
+
+                                                        <button
+                                                            onClick={() => handleViewJourneys(period)}
+                                                            className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                                        >
+                                                            <Map className="w-4 h-4 text-purple-500" />
+                                                            <div>
+                                                                <div>View Journeys</div>
+                                                                <div className="text-xs text-gray-400">Preview grouped trips</div>
+                                                            </div>
                                                         </button>
                                                     </div>
                                                 )}
@@ -583,6 +699,153 @@ export function ReportsPage() {
                         isAlreadyFinalized={isPeriodFinalized(selectedPeriod)}
                     />
                 </>
+            )}
+
+            {/* Journeys Modal */}
+            {isJourneysModalOpen && selectedPeriod && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                                    <Map className="w-5 h-5 text-purple-500" />
+                                    Journeys - {selectedPeriod.description}
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">
+                                    Trips grouped by vehicle and driver
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => {
+                                    setIsJourneysModalOpen(false);
+                                    setSelectedPeriod(null);
+                                    setJourneys([]);
+                                }}
+                                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-auto p-6">
+                            {journeysLoading ? (
+                                <div className="flex items-center justify-center py-12">
+                                    <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+                                </div>
+                            ) : journeys.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500">
+                                    <Map className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                                    <p>No journeys found for this period.</p>
+                                    <p className="text-sm">Make sure assignments have been run.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4">
+                                    {/* Summary */}
+                                    <div className="grid grid-cols-4 gap-4 mb-6">
+                                        <div className="bg-blue-50 rounded-lg p-4">
+                                            <div className="text-2xl font-bold text-blue-700">{journeys?.length || 0}</div>
+                                            <div className="text-sm text-blue-600">Total Journeys</div>
+                                        </div>
+                                        <div className="bg-emerald-50 rounded-lg p-4">
+                                            <div className="text-2xl font-bold text-emerald-700">
+                                                {Array.isArray(journeys) ? journeys.reduce((sum, j) => sum + (j.tripCount || 0), 0) : 0}
+                                            </div>
+                                            <div className="text-sm text-emerald-600">Total Trips</div>
+                                        </div>
+                                        <div className="bg-amber-50 rounded-lg p-4">
+                                            <div className="text-2xl font-bold text-amber-700">
+                                                {Array.isArray(journeys) ? journeys.reduce((sum, j) => sum + (j.totalDistanceKm || 0), 0).toFixed(0) : 0} km
+                                            </div>
+                                            <div className="text-sm text-amber-600">Total Distance</div>
+                                        </div>
+                                        <div className="bg-purple-50 rounded-lg p-4">
+                                            <div className="text-2xl font-bold text-purple-700">
+                                                {Array.isArray(journeys) ? journeys.reduce((sum, j) => sum + (j.totalFuelConsumed || 0), 0).toFixed(1) : 0} L
+                                            </div>
+                                            <div className="text-sm text-purple-600">Fuel Consumed</div>
+                                        </div>
+                                    </div>
+
+                                    {/* Table */}
+                                    <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                                        <table className="w-full text-sm">
+                                            <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-600">№</th>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-600">Date</th>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-600">Vehicle</th>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-600">Driver</th>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-600">Time</th>
+                                                <th className="px-4 py-3 text-left font-medium text-gray-600">Companies</th>
+                                                <th className="px-4 py-3 text-right font-medium text-gray-600">Trips</th>
+                                                <th className="px-4 py-3 text-right font-medium text-gray-600">Distance</th>
+                                                <th className="px-4 py-3 text-right font-medium text-gray-600">Fuel</th>
+                                            </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                            {journeys.map((journey, idx) => (
+                                                <tr key={idx} className="hover:bg-gray-50">
+                                                    <td className="px-4 py-3 text-gray-500">{journey.journeyNumber}</td>
+                                                    <td className="px-4 py-3">
+                                                        {new Date(journey.date).toLocaleDateString('ru-RU')}
+                                                    </td>
+                                                    <td className="px-4 py-3">
+                                                        <div className="font-medium">{journey.vehiclePlate}</div>
+                                                        <div className="text-xs text-gray-400">{journey.vehicleModel}</div>
+                                                    </td>
+                                                    <td className="px-4 py-3">{journey.driverName}</td>
+                                                    <td className="px-4 py-3 text-gray-500">
+                                                        {journey.departureTime.substring(0, 5)} - {journey.returnTime.substring(0, 5)}
+                                                    </td>
+                                                    <td className="px-4 py-3 max-w-xs truncate" title={journey.companies}>
+                                                        {journey.companies}
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right">
+                                                            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
+                                                                journey.tripCount > 1 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'
+                                                            }`}>
+                                                                {journey.tripCount}
+                                                            </span>
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right font-medium">
+                                                        {journey.totalDistanceKm.toFixed(1)} km
+                                                    </td>
+                                                    <td className="px-4 py-3 text-right text-amber-600">
+                                                        {journey.totalFuelConsumed.toFixed(2)} L
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-gray-200 flex justify-between items-center bg-gray-50">
+                            <button
+                                onClick={() => handleDownloadWaybill(selectedPeriod.id, selectedPeriod)}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                            >
+                                <Download className="w-4 h-4" />
+                                Download Waybill (Excel)
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setIsJourneysModalOpen(false);
+                                    setSelectedPeriod(null);
+                                    setJourneys([]);
+                                }}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
