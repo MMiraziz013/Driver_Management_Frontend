@@ -3,7 +3,9 @@ import { Plus } from 'lucide-react';
 
 // Import the service and modal
 import { getAllVehicleTypes } from '@/services/vehicleTypeService';
-import { AddVehicleTypeModal } from './AddVehicleTypeModal'; // Assuming modal is in the same directory
+import { AddVehicleTypeModal } from './AddVehicleTypeModal';
+import {getToken} from "@/services/authService";
+import {useAuth} from "@/auth/AuthContext"; // Assuming modal is in the same directory
 
 // Define the interface that matches the service response
 interface VehicleType {
@@ -21,6 +23,7 @@ const mockVehicleTypes: VehicleType[] = [
 
 
 export function VehicleTypesPage() {
+    const { token } = useAuth();
     // State for data fetching
     const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,7 +40,7 @@ export function VehicleTypesPage() {
             setLoading(true);
             setError(null);
             try {
-                const fetchedTypes = await getAllVehicleTypes();
+                const fetchedTypes = await getAllVehicleTypes(token!);
                 setVehicleTypes(fetchedTypes);
             } catch (err) {
                 console.error("Error fetching vehicle types:", err);

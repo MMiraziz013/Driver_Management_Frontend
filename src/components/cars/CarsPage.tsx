@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Loader2, RefreshCw, CarFront, Trash2, Pencil } from 'lucide-react';
+import { Plus, Loader2, RefreshCw, CarFront, Trash2, Pencil, ChevronDown, ChevronRight, Fuel, Gauge, Droplets } from 'lucide-react';
 import { AddCarModal } from './AddCarModal';
-import {EditCarModal} from "@/components/cars/EditCarModal";
+import { EditCarModal } from "@/components/cars/EditCarModal";
+import { useAuthFetch } from '@/auth/AuthContext';
 
 // Matching your C# GetVehicleDto
 interface Vehicle {
@@ -12,7 +13,15 @@ interface Vehicle {
     requiredDriverCategory: string | number;
     vehicleTypeId?: number;
     vehicleTypeName?: string;
+    isActive: boolean;
+    fuelTankCapacity: number | null;
+    fuelConsumptionPer100Km: number | null;
+    fuelType: string | null;
+    initialFuelLevel: number | null;
+    currentMileage: number | null;
 }
+
+const API_BASE = 'http://192.168.68.123:8080/api';
 
 /**
  * Normalizes the backend response (0, 1, 2, 3 or "B", "C", "D")
@@ -21,7 +30,6 @@ interface Vehicle {
 const getCategoryLabel = (category: string | number) => {
     const val = String(category).trim().toUpperCase();
 
-    // Map the C# Enum Integer Values (1=B, 2=C, 3=D)
     const enumMap: Record<string, string> = {
         "1": "B",
         "2": "C",
@@ -47,24 +55,38 @@ const getCategoryStyles = (category: string | number) => {
     const label = getCategoryLabel(category).toUpperCase();
     if (label.includes('D')) return 'bg-purple-50 text-purple-700 border-purple-200';
     if (label.includes('C')) return 'bg-blue-50 text-blue-700 border-blue-200';
-    return 'bg-slate-50 text-slate-700 border-slate-200'; // Default for B
+    return 'bg-slate-50 text-slate-700 border-slate-200';
 };
 
 export function CarsPage() {
+    const authFetch = useAuthFetch();
+
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+    const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
+    const [togglingStatus, setTogglingStatus] = useState<Set<number>>(new Set());
 
-    const API_URL = 'http://localhost:5147/api/vehicles';
+    const toggleRowExpansion = (id: number) => {
+        setExpandedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    };
 
     const fetchVehicles = async () => {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await fetch(API_URL);
+            const response = await authFetch(`${API_BASE}/vehicles`);
             const result = await response.json();
 
             if (response.ok && result.data) {
@@ -76,6 +98,39 @@ export function CarsPage() {
             setError('Could not connect to the server. Please check if the API is running.');
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleToggleStatus = async (id: number, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent row expansion
+
+        // Add to toggling set (for loading state)
+        setTogglingStatus(prev => new Set(prev).add(id));
+
+        try {
+            const response = await authFetch(`${API_BASE}/vehicles/${id}`, {
+                method: 'PUT',
+            });
+
+            if (response.ok) {
+                // Update local state immediately
+                setVehicles(prev =>
+                    prev.map(v =>
+                        v.id === id ? { ...v, isActive: !v.isActive } : v
+                    )
+                );
+            } else {
+                alert("Failed to change vehicle status.");
+            }
+        } catch (err) {
+            alert("Connection error.");
+        } finally {
+            // Remove from toggling set
+            setTogglingStatus(prev => {
+                const newSet = new Set(prev);
+                newSet.delete(id);
+                return newSet;
+            });
         }
     };
 
@@ -93,7 +148,7 @@ export function CarsPage() {
         if (!window.confirm("Are you sure you want to delete this vehicle?")) return;
 
         try {
-            const response = await fetch(`${API_URL}/${id}`, {
+            const response = await authFetch(`${API_BASE}/vehicles/${id}`, {
                 method: 'DELETE',
             });
 
@@ -122,7 +177,7 @@ export function CarsPage() {
 
     return (
         <div>
-            {/* Header - Unified with VehicleTypes style */}
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
                 <h1 className="text-3xl font-bold text-slate-900">Fleet Inventory ({vehicles.length})</h1>
                 <div className="flex gap-2">
@@ -148,66 +203,186 @@ export function CarsPage() {
                 </div>
             )}
 
-            {/* Table - Unified style */}
+            {/* Table */}
             <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-slate-600">
                         <thead>
                         <tr className="bg-slate-50 border-b border-slate-200">
-                            <th className="px-6 py-3 text-left font-medium text-slate-600">Plate Number</th>
-                            <th className="px-6 py-3 text-left font-medium text-slate-600">Model</th>
-                            <th className="px-6 py-3 text-left font-medium text-slate-600">Color</th>
-                            <th className="px-6 py-3 text-left font-medium text-slate-600">Category</th>
-                            <th className="px-6 py-3 text-right font-medium text-slate-600">Actions</th>
+                            <th className="px-4 py-3 text-left font-medium text-slate-600 w-10"></th>
+                            <th className="px-4 py-3 text-left font-medium text-slate-600">Plate Number</th>
+                            <th className="px-4 py-3 text-left font-medium text-slate-600">Model</th>
+                            <th className="px-4 py-3 text-left font-medium text-slate-600">Type</th>
+                            <th className="px-4 py-3 text-left font-medium text-slate-600">Color</th>
+                            <th className="px-4 py-3 text-left font-medium text-slate-600">Category</th>
+                            <th className="px-4 py-3 text-left font-medium text-slate-600">Status</th>
+                            <th className="px-4 py-3 text-right font-medium text-slate-600">Actions</th>
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200">
-                        {vehicles.map((car, index) => (
-                            <tr
-                                key={car.id}
-                                className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-100/50 transition-colors`}
-                            >
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-3">
-                                        <CarFront className="w-4 h-4 text-slate-400" />
-                                        <span className="font-medium text-slate-900">{car.plateNumber}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4 text-slate-600">
-                                    {car.model || 'N/A'}
-                                </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
-                                        <div
-                                            className="w-3 h-3 rounded-full border border-slate-200"
-                                            style={{ backgroundColor: car.color.toLowerCase().replace(' ', '') }}
-                                        />
-                                        <span className="capitalize">{car.color}</span>
-                                    </div>
-                                </td>
-                                <td className="px-6 py-4">
-                                    <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${getCategoryStyles(car.requiredDriverCategory)}`}>
-                                        {getCategoryLabel(car.requiredDriverCategory)}
-                                    </span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <button
-                                            onClick={() => handleEdit(car)}
-                                            className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
-                                        >
-                                            <Pencil className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(car.id)}
-                                            className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
+                        {vehicles.map((car, index) => {
+                            const isExpanded = expandedRows.has(car.id);
+                            const isToggling = togglingStatus.has(car.id);
+                            return (
+                                <React.Fragment key={car.id}>
+                                    {/* Main Row */}
+                                    <tr
+                                        className={`${index % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'} hover:bg-slate-100/50 transition-colors cursor-pointer`}
+                                        onClick={() => toggleRowExpansion(car.id)}
+                                    >
+                                        <td className="px-4 py-4">
+                                            <button className="p-1 hover:bg-slate-200 rounded transition-colors">
+                                                {isExpanded ? (
+                                                    <ChevronDown className="w-4 h-4 text-slate-500" />
+                                                ) : (
+                                                    <ChevronRight className="w-4 h-4 text-slate-500" />
+                                                )}
+                                            </button>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center gap-3">
+                                                <CarFront className="w-4 h-4 text-slate-400" />
+                                                <span className="font-medium text-slate-900">{car.plateNumber}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4 text-slate-600">
+                                            {car.model || 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-4 text-slate-600">
+                                            {car.vehicleTypeName || 'N/A'}
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <div className="flex items-center gap-2">
+                                                <div
+                                                    className="w-3 h-3 rounded-full border border-slate-200"
+                                                    style={{ backgroundColor: car.color?.toLowerCase().replace(' ', '') || '#gray' }}
+                                                />
+                                                <span className="capitalize">{car.color}</span>
+                                            </div>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${getCategoryStyles(car.requiredDriverCategory)}`}>
+                                                {getCategoryLabel(car.requiredDriverCategory)}
+                                            </span>
+                                        </td>
+                                        <td className="px-4 py-4">
+                                            {/* Toggle Switch */}
+                                            <button
+                                                onClick={(e) => handleToggleStatus(car.id, e)}
+                                                disabled={isToggling}
+                                                className={`
+                                                    relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                                                    focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
+                                                    ${isToggling ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                                                    ${car.isActive ? 'bg-green-500' : 'bg-slate-300'}
+                                                `}
+                                            >
+                                                <span
+                                                    className={`
+                                                        inline-block h-4 w-4 transform rounded-full bg-white transition-transform shadow-sm
+                                                        ${car.isActive ? 'translate-x-6' : 'translate-x-1'}
+                                                    `}
+                                                />
+                                                {isToggling && (
+                                                    <Loader2 className="absolute inset-0 m-auto w-3 h-3 animate-spin text-white" />
+                                                )}
+                                            </button>
+                                        </td>
+                                        <td className="px-4 py-4 text-right">
+                                            <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    onClick={() => handleEdit(car)}
+                                                    className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDelete(car.id)}
+                                                    className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+
+                                    {/* Expanded Details Row */}
+                                    {isExpanded && (
+                                        <tr className="bg-slate-50">
+                                            <td colSpan={8} className="px-4 py-4">
+                                                <div className="ml-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                    {/* Fuel Information */}
+                                                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <Fuel className="w-4 h-4 text-indigo-500" />
+                                                            <h4 className="font-semibold text-slate-800">Fuel Information</h4>
+                                                        </div>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Fuel Type:</span>
+                                                                <span className="font-medium text-slate-800">{car.fuelType || 'N/A'}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Tank Capacity:</span>
+                                                                <span className="font-medium text-slate-800">
+                                                                    {car.fuelTankCapacity ? `${car.fuelTankCapacity} L` : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Initial Fuel:</span>
+                                                                <span className="font-medium text-slate-800">
+                                                                    {car.initialFuelLevel ? `${car.initialFuelLevel} L` : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Consumption */}
+                                                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <Droplets className="w-4 h-4 text-green-500" />
+                                                            <h4 className="font-semibold text-slate-800">Consumption</h4>
+                                                        </div>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Per 100km:</span>
+                                                                <span className="font-medium text-slate-800">
+                                                                    {car.fuelConsumptionPer100Km ? `${car.fuelConsumptionPer100Km} L` : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            {car.fuelTankCapacity && car.fuelConsumptionPer100Km && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-slate-500">Est. Range:</span>
+                                                                    <span className="font-medium text-slate-800">
+                                                                        {Math.round((car.fuelTankCapacity / car.fuelConsumptionPer100Km) * 100)} km
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Mileage */}
+                                                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <Gauge className="w-4 h-4 text-orange-500" />
+                                                            <h4 className="font-semibold text-slate-800">Odometer</h4>
+                                                        </div>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Current Mileage:</span>
+                                                                <span className="font-medium text-slate-800">
+                                                                    {car.currentMileage ? `${car.currentMileage.toLocaleString()} km` : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    )}
+                                </React.Fragment>
+                            );
+                        })}
                         </tbody>
                     </table>
 

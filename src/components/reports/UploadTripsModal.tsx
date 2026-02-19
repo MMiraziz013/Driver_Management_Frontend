@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { X, Upload, Loader2, AlertCircle, FileSpreadsheet, CheckCircle } from 'lucide-react';
+import {useAuthFetch} from "@/auth/AuthContext";
 
-const API_BASE = "http://localhost:5147/api";
+const API_BASE = "http://192.168.68.123:8080/api";
 
 interface ReportPeriod {
     id: number;
@@ -20,6 +21,8 @@ interface UploadTripsModalProps {
 }
 
 export function UploadTripsModal({ isOpen, onClose, onSuccess, periodId, periods }: UploadTripsModalProps) {
+    const authFetch = useAuthFetch();
+    
     const [selectedPeriodId, setSelectedPeriodId] = useState<string>(periodId?.toString() || '');
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -93,7 +96,7 @@ export function UploadTripsModal({ isOpen, onClose, onSuccess, periodId, periods
         formData.append('file', file);
 
         try {
-            const response = await fetch(`${API_BASE}/reports/upload/${selectedPeriodId}`, {
+            const response = await authFetch(`${API_BASE}/reports/upload/${selectedPeriodId}`, {
                 method: 'POST',
                 body: formData,
                 // Don't set Content-Type - browser will set it with boundary

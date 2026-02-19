@@ -82,7 +82,7 @@ export function EditDriverModal({ isOpen, driver, onClose, onSuccess }: EditDriv
         };
 
         try {
-            const response = await fetch('http://localhost:5147/api/drivers', {
+            const response = await fetch('http://192.168.68.123:8080/api/drivers', {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dto)

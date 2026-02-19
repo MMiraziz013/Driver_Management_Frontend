@@ -21,8 +21,9 @@ import { UploadTripsModal } from "./UploadTripsModal";
 import { UploadGasPurchasesModal } from "./UploadGasPurchasesModal";
 import { FuelAllocationModal } from "./FuelAllocationModal";
 import { FinalizePeriodModal } from "./FinalizePeriodModal";
+import {useAuthFetch} from "@/auth/AuthContext";
 
-const API_BASE = "http://localhost:5147/api";
+const API_BASE = "http://192.168.68.123:8080/api";
 
 interface ReportPeriod {
     id: number;
@@ -59,6 +60,8 @@ interface JourneyDto {
 }
 
 export function ReportsPage() {
+    const authFetch = useAuthFetch();
+    
     const [periods, setPeriods] = useState<ReportPeriod[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [processingId, setProcessingId] = useState<number | null>(null);
@@ -83,7 +86,7 @@ export function ReportsPage() {
 
     const fetchPeriods = async () => {
         try {
-            const response = await fetch(`${API_BASE}/report-periods`);
+            const response = await authFetch(`${API_BASE}/report-periods`);
 
             if (response.status === 204 || response.headers.get("content-length") === "0") {
                 setPeriods([]);
@@ -136,7 +139,7 @@ export function ReportsPage() {
         setProcessingId(periodId);
         setProcessingAction("assignment");
         try {
-            const response = await fetch(`${API_BASE}/reports/assign/${periodId}`, {
+            const response = await authFetch(`${API_BASE}/reports/assign/${periodId}`, {
                 method: 'POST'
             });
             const result = await response.json();
@@ -165,7 +168,7 @@ export function ReportsPage() {
         setProcessingId(periodId);
         setProcessingAction("fuel");
         try {
-            const response = await fetch(`${API_BASE}/gas/allocate/${periodId}`, {
+            const response = await authFetch(`${API_BASE}/gas/allocate/${periodId}`, {
                 method: 'POST'
             });
             const result = await response.json();
@@ -188,7 +191,7 @@ export function ReportsPage() {
     const handleDownloadAssignments = async (periodId: number, description: string) => {
         setOpenExportMenuId(null);
         try {
-            const response = await fetch(`${API_BASE}/reports/export/${periodId}`);
+            const response = await authFetch(`${API_BASE}/reports/export/${periodId}`);
 
             if (!response.ok) {
                 alert("❌ Export failed. Make sure assignments were generated first.");
@@ -214,7 +217,7 @@ export function ReportsPage() {
     const handleDownloadFuelReport = async (periodId: number, description: string) => {
         setOpenExportMenuId(null);
         try {
-            const response = await fetch(`${API_BASE}/gas/export-detailed/${periodId}`);
+            const response = await authFetch(`${API_BASE}/gas/export-detailed/${periodId}`);
 
             if (!response.ok) {
                 alert("❌ Export failed. Make sure fuel allocation was run first.");
@@ -243,7 +246,7 @@ export function ReportsPage() {
         setProcessingAction("waybill");
 
         try {
-            const response = await fetch(`${API_BASE}/reports/export-waybill/${periodId}`);
+            const response = await authFetch(`${API_BASE}/reports/export-waybill/${periodId}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -283,7 +286,7 @@ export function ReportsPage() {
         setOpenExportMenuId(null);
 
         try {
-            const response = await fetch(`${API_BASE}/reports/journeys/${period.id}`);
+            const response = await authFetch(`${API_BASE}/reports/journeys/${period.id}`);
 
             if (response.ok) {
                 const result = await response.json();
@@ -417,7 +420,7 @@ export function ReportsPage() {
                 </div>
             ) : (
                 /* Table */
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
                     <table className="w-full text-left">
                         <thead className="bg-gray-50 border-b border-gray-200">
                         <tr>

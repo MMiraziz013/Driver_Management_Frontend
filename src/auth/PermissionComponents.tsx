@@ -33,6 +33,15 @@ export const Permissions = {
         View: 'Permissions.Users.View',
         ManageAll: 'Permissions.Users.ManageAll',
     },
+    ServiceTypes: {
+        View: 'Permissions.ServiceTypes.View',
+        Manage: 'Permissions.ServiceTypes.Manage',
+    },
+    Gas: {
+        View: "Permissions.Gas.View",
+        Manage: "Permissions.Gas.Manage",
+    }
+    
 } as const;
 
 

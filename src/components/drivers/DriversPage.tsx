@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, RefreshCw, Loader2 } from 'lucide-react';
 import { getAllDrivers } from '@/services/driverService';
 import { DriverCard } from "@/components/drivers/DriverCard";
 import { AddDriverModal } from './AddDriverModal';
 import { EditDriverModal } from './EditDriverModal';
+import { useAuthFetch, useAuth } from '@/auth/AuthContext';
+
+const API_BASE = 'http://192.168.68.123:8080/api';
 
 interface DriverFront {
     id: string;
@@ -16,6 +19,9 @@ interface DriverFront {
 }
 
 export function DriversPage() {
+    const authFetch = useAuthFetch();
+    const { token } = useAuth();
+
     const [drivers, setDrivers] = useState<DriverFront[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,14 +29,12 @@ export function DriversPage() {
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedDriver, setSelectedDriver] = useState<DriverFront | null>(null);
 
-    // Fetch logic extracted and memoized
     const fetchDriverData = useCallback(async () => {
-        // Only show loading spinner on initial load
         if (drivers.length === 0) setLoading(true);
         setError(null);
 
         try {
-            const fetchedDrivers: DriverFront[] = await getAllDrivers();
+            const fetchedDrivers: DriverFront[] = await getAllDrivers(token!);
             setDrivers(fetchedDrivers);
         } catch (err) {
             console.error("Error fetching drivers:", err);
@@ -38,12 +42,11 @@ export function DriversPage() {
         } finally {
             setLoading(false);
         }
-    }, [drivers.length]);
+    }, [token]);
 
-    // Initial load on mount
     useEffect(() => {
         fetchDriverData();
-    }, [fetchDriverData]);
+    }, []);
 
     const handleCloseAddModal = () => setIsAddModalOpen(false);
 
@@ -61,12 +64,11 @@ export function DriversPage() {
         if (!window.confirm("Are you sure you want to delete this driver?")) return;
 
         try {
-            const response = await fetch(`http://localhost:5147/api/drivers/${id}`, {
+            const response = await authFetch(`${API_BASE}/drivers/${id}`, {
                 method: 'DELETE'
             });
 
             if (response.ok) {
-                // Refresh the driver list after successful deletion
                 await fetchDriverData();
             } else {
                 alert("Failed to delete driver. Please try again.");
@@ -77,12 +79,38 @@ export function DriversPage() {
         }
     };
 
-    // --- State-based Rendering ---
+    // Toggle driver active status (activate/deactivate)
+    const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+        try {
+            // The endpoint toggles the status, so we just call it
+            const response = await authFetch(`${API_BASE}/drivers/${id}`, {
+                method: 'PUT'
+            });
+
+            if (response.ok) {
+                // Update the local state immediately for better UX
+                setDrivers(prevDrivers =>
+                    prevDrivers.map(driver =>
+                        driver.id === id
+                            ? { ...driver, isActive: !driver.isActive }
+                            : driver
+                    )
+                );
+            } else {
+                const result = await response.json();
+                alert(`Failed to ${currentStatus ? 'deactivate' : 'activate'} driver: ${result.message || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error("Toggle status error:", error);
+            alert("Error updating driver status. Please check your connection.");
+        }
+    };
 
     if (loading) {
         return (
-            <div className="p-8 text-lg font-medium text-indigo-600">
-                Loading driver data...
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
+                <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
+                <p className="text-black font-bold text-lg">Loading drivers...</p>
             </div>
         );
     }
@@ -102,21 +130,43 @@ export function DriversPage() {
         );
     }
 
+    // Count active/inactive drivers
+    const activeCount = drivers.filter(d => d.isActive).length;
+    const inactiveCount = drivers.length - activeCount;
+
     return (
         <div>
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
-                <h1 className="text-3xl font-bold text-slate-900">
-                    Drivers ({drivers.length})
-                </h1>
-                <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                    <Plus className="w-5 h-5" />
-                    Add a Driver
-                </button>
+                <div>
+                    <h1 className="text-3xl font-bold text-slate-900">
+                        Drivers ({drivers.length})
+                    </h1>
+                    <p className="text-sm text-slate-500 mt-1">
+                        <span className="text-green-600 font-medium">{activeCount} active</span>
+                        {inactiveCount > 0 && (
+                            <span className="text-red-500 font-medium ml-2">• {inactiveCount} inactive</span>
+                        )}
+                    </p>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={fetchDriverData}
+                        className="p-2 text-slate-500 hover:bg-slate-100 rounded-lg border border-slate-200"
+                    >
+                        <RefreshCw className="w-5 h-5" />
+                    </button>
+                    <button
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm"
+                    >
+                        <Plus className="w-5 h-5" />
+                        Add Driver
+                    </button>
+                </div>
             </div>
 
+            {/* Driver Grid */}
             {drivers.length === 0 ? (
                 <div className="text-center p-12 border border-slate-200 rounded-xl bg-white">
                     <p className="text-xl text-slate-600 mb-4">No drivers found.</p>
@@ -135,19 +185,19 @@ export function DriversPage() {
                             driver={driver}
                             onEdit={handleEdit}
                             onDelete={handleDelete}
+                            onToggleStatus={handleToggleStatus}
                         />
                     ))}
                 </div>
             )}
 
-            {/* Add Driver Modal */}
+            {/* Modals */}
             <AddDriverModal
                 isOpen={isAddModalOpen}
                 onClose={handleCloseAddModal}
                 onSuccess={fetchDriverData}
             />
 
-            {/* Edit Driver Modal */}
             <EditDriverModal
                 isOpen={isEditModalOpen}
                 driver={selectedDriver}

@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { addDriver, AddDriverDto } from '@/services/driverService';
+import { useAuthFetch } from '@/auth/AuthContext';
+import { useAuth } from '@/auth/AuthContext';
+
 
 interface AddDriverModalProps {
     isOpen: boolean;
@@ -11,6 +14,9 @@ interface AddDriverModalProps {
 const LICENSE_CATEGORIES = ['A', 'B', 'C', 'D', 'E'];
 
 export function AddDriverModal({ isOpen, onClose, onSuccess }: AddDriverModalProps) {
+    const authFetch = useAuthFetch();
+    const { token } = useAuth();
+
     const [fullName, setFullName] = useState('');
     const [birthDate, setBirthDate] = useState('');
     const [address, setAddress] = useState('');
@@ -33,7 +39,7 @@ export function AddDriverModal({ isOpen, onClose, onSuccess }: AddDriverModalPro
         };
 
         try {
-            await addDriver(dto);
+            await addDriver(dto, token!);
             onSuccess(); // Refresh the list
             onClose();   // Close modal
             // Reset form

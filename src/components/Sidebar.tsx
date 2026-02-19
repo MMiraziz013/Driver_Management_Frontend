@@ -3,7 +3,7 @@
 "use client";
 
 import React from 'react';
-import { Car, Users, Truck, FileText, Settings, PanelLeftIcon } from 'lucide-react';
+import { Car, Users, Truck, FileText, Settings, PanelLeftIcon, Tags } from 'lucide-react';
 
 // Import structural components and hooks from SidebarBase.tsx
 import {
@@ -20,7 +20,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { useIsMobile } from './ui/use-mobile';
 
 // --- YOUR ORIGINAL COMPONENT INTERFACE ---
-type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings';
+// Added 'service-types' to the Page type
+export type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings' | 'service-types';
 
 interface SidebarProps {
     currentPage: Page;
@@ -33,6 +34,7 @@ function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
         { id: 'drivers' as Page, label: 'Drivers', icon: Users },
         { id: 'vehicle-types' as Page, label: 'Vehicle Types', icon: Truck },
         { id: 'cars' as Page, label: 'Cars', icon: Car },
+        { id: 'service-types' as Page, label: 'Service Types', icon: Tags },
         { id: 'reports' as Page, label: 'Reports', icon: FileText },
     ];
 

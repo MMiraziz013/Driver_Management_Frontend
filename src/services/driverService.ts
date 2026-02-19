@@ -25,13 +25,14 @@ interface PaginatedResponse<T> {
     statusCode: number; // Or a similar status field
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "http://192.168.68.123:8080/api";
 
 /**
  * Fetches all drivers from the backend API.
  * GET http://localhost:5147/api/drivers
  */
 export async function getAllDrivers(
+    token: string,
     pageNumber: number = 1,
     pageSize: number = 30
 ): Promise<DriverFront[]> { // NOTE: Still promises an array to the component
@@ -41,13 +42,14 @@ export async function getAllDrivers(
         PageSize: pageSize.toString(),
     });
 
-    const endpoint = `${API_BASE_URL}/api/drivers?${queryParams.toString()}`;
+    const endpoint = `${API_BASE_URL}/drivers?${queryParams.toString()}`;
 
     try {
         const response = await fetch(endpoint, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                "Authorization": `Bearer ${token}`
             },
         });
 
@@ -71,13 +73,14 @@ export async function getAllDrivers(
     }
 }
 
-export async function addDriver(dto: AddDriverDto): Promise<void> {
-    const endpoint = `${API_BASE_URL}/api/drivers/add`;
+export async function addDriver(dto: AddDriverDto, token: string): Promise<void> {
+    const endpoint = `${API_BASE_URL}/drivers/add`;
 
     const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(dto),
     });

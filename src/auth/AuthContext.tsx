@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-const API_BASE = "http://localhost:5147/api";
+const API_BASE = "http://192.168.68.123:8080/api";
 
 interface User {
     id: number;

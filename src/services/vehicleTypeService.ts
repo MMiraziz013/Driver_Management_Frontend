@@ -17,13 +17,14 @@ interface PaginatedResponse<T> {
 }
 
 // Retrieve API base URL from environment variables
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const API_BASE_URL = "http://192.168.68.123:8080/api";
 
 /**
  * Fetches vehicle types from the backend API, including required pagination filters.
  * GET http://localhost:5147/api/vehicles?PageNumber=1&PageSize=10
  */
 export async function getAllVehicleTypes(
+    token: string,
     pageNumber: number = 1,
     pageSize: number = 10
 ): Promise<VehicleType[]> {
@@ -35,13 +36,14 @@ export async function getAllVehicleTypes(
     });
 
     // NOTE: Assuming the endpoint is "api/vehicles"
-    const endpoint = `${API_BASE_URL}/api/vehicle-types?${queryParams.toString()}`;
+    const endpoint = `${API_BASE_URL}/vehicle-types?${queryParams.toString()}`;
 
     try {
         const response = await fetch(endpoint, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,  // ← Add this
             },
         });
 

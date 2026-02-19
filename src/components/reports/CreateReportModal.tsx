@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Upload, Loader2, AlertCircle } from 'lucide-react';
+import {useAuthFetch} from "@/auth/AuthContext";
 
 interface CreateReportModalProps {
     isOpen: boolean;
@@ -8,6 +9,7 @@ interface CreateReportModalProps {
 }
 
 export function CreateReportModal({ isOpen, onClose, onSuccess }: CreateReportModalProps) {
+    const authFetch = useAuthFetch();
     const [selectedPeriodId, setSelectedPeriodId] = useState<string>('');
     const [file, setFile] = useState<File | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +32,7 @@ export function CreateReportModal({ isOpen, onClose, onSuccess }: CreateReportMo
     // Fetch existing periods so user can select where to upload
     useEffect(() => {
         if (isOpen) {
-            fetch('http://localhost:5147/api/report-periods')
+            authFetch('http://192.168.68.123:8080/api/report-periods')
                 .then(res => res.json())
                 .then(result => setPeriods(result.data || []))
                 .catch(() => setError("Failed to load report periods."));
@@ -57,7 +59,7 @@ export function CreateReportModal({ isOpen, onClose, onSuccess }: CreateReportMo
         formData.append('file', file); // 'file' must match the parameter name in C#
 
         try {
-            const response = await fetch(`https://localhost:5001/api/reports/upload/${selectedPeriodId}`, {
+            const response = await authFetch(`http://192.168.68.123:8080/api/reports/upload/${selectedPeriodId}`, {
                 method: 'POST',
                 body: formData,
                 // Note: Don't set Content-Type header manually, 

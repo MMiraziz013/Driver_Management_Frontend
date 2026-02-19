@@ -1,24 +1,23 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Sidebar } from '@/components/Sidebar';
+import { Sidebar, type Page } from '@/components/Sidebar';
 import { DriversPage } from '@/components/drivers/DriversPage';
 import { VehicleTypesPage } from '@/components/vehicle-types/VehicleTypePage';
 import { CarsPage } from '@/components/cars/CarsPage';
 import { ReportsPage } from '@/components/reports/ReportsPage';
 import { SettingsPage } from '@/components/settings/SettingsPage';
+import { ServiceTypesPage } from '@/components/service_types/ServiceTypesPage';
 
 // Auth imports
 import { AuthProvider, useAuth } from '@/auth/AuthContext';
-import {  LoginPage } from '@/auth/LoginPage';
+import { LoginPage } from '@/auth/LoginPage';
 import { RegisterPage } from '@/auth/RegisterPage';
 import { NoPermissionBanner } from '@/auth/PermissionComponents';
 import { Loader2 } from 'lucide-react';
 
 // Import Header that uses auth
 import { Header } from '@/components/Header';
-
-type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings';
 
 // Loading component
 function LoadingScreen() {
@@ -49,6 +48,8 @@ function AuthenticatedApp() {
                 return <ReportsPage />;
             case 'settings':
                 return <SettingsPage />;
+            case 'service-types':
+                return <ServiceTypesPage />;
             default:
                 return <DriversPage />;
         }

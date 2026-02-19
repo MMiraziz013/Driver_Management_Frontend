@@ -11,12 +11,13 @@ import { RegisterPage } from '@/auth/RegisterPage';
 import { NoPermissionBanner } from '@/auth/PermissionComponents';
 import { Loader2 } from 'lucide-react';
 
-// Sidebar components
+// Sidebar components - import Page type from Sidebar to avoid duplicate type definitions
 import {
     SidebarProvider,
     Sidebar as StyledSidebar,
     SidebarInset,
     SidebarTrigger,
+    type Page,
 } from '@/components/Sidebar';
 
 // Import all page and header components
@@ -26,8 +27,7 @@ import { VehicleTypesPage } from "@/components/vehicle-types/VehicleTypePage";
 import { CarsPage } from "@/components/cars/CarsPage";
 import { ReportsPage } from "@/components/reports/ReportsPage";
 import { SettingsPage } from "@/components/settings/SettingsPage";
-
-type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings';
+import { ServiceTypesPage } from "@/components/service_types/ServiceTypesPage";
 
 // Loading component
 function LoadingScreen() {
@@ -67,6 +67,8 @@ function AuthenticatedApp() {
                 return <ReportsPage />;
             case 'settings':
                 return <SettingsPage />;
+            case 'service-types':
+                return <ServiceTypesPage />;
             default:
                 return <DriversPage />;
         }
