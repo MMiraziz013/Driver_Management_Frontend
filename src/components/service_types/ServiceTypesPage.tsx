@@ -3,14 +3,13 @@ import { Plus, Pencil, Trash2, Loader2, Tags, RefreshCw } from 'lucide-react';
 import { AddServiceTypeModal } from './AddServiceTypeModal';
 import { EditServiceTypeModal } from './EditServiceTypeModal';
 import { useAuthFetch } from '@/auth/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 
 interface ServiceType {
     id: number;
     name: string;
     description: string | null;
 }
-
-const API_BASE = "http://192.168.68.123:8080/api";
 
 export function ServiceTypesPage() {
     const authFetch = useAuthFetch();
@@ -32,7 +31,7 @@ export function ServiceTypesPage() {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await authFetch(`${API_BASE}/service-type`);
+            const response = await authFetch(`${API_BASE_URL}/service-type`);
             if (!response.ok) {
                 throw new Error('Failed to fetch service types');
             }
@@ -58,7 +57,7 @@ export function ServiceTypesPage() {
     const handleDelete = async (id: number) => {
         setIsDeleting(true);
         try {
-            const response = await authFetch(`${API_BASE}/service-type?id=${id}`, {
+            const response = await authFetch(`${API_BASE_URL}/service-type?id=${id}`, {
                 method: 'DELETE',
             });
 

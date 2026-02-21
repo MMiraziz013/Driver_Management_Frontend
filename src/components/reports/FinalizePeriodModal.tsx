@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertCircle, CheckCircle, AlertTriangle, Lock, Unlock, Fuel, ArrowRight, Users, Car } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
-
-const API_BASE = "http://192.168.68.123:8080/api";
+import { API_BASE_URL } from '@/config/api';
 
 interface VehicleFuelUpdate {
     vehicleId: number;
@@ -98,7 +97,7 @@ export function FinalizePeriodModal({
 
         try {
             // Use the unified endpoint in ReportController
-            const response = await authFetch(`${API_BASE}/reports/periods/${periodId}/finalize/preview`);
+            const response = await authFetch(`${API_BASE_URL}/reports/periods/${periodId}/finalize/preview`);
             const result = await response.json();
 
             if (response.ok && result.data) {
@@ -119,7 +118,7 @@ export function FinalizePeriodModal({
 
         try {
             // Use the unified endpoint in ReportController
-            const response = await authFetch(`${API_BASE}/reports/periods/${periodId}/finalize`, {
+            const response = await authFetch(`${API_BASE_URL}/reports/periods/${periodId}/finalize`, {
                 method: 'POST'
             });
             const result = await response.json();
@@ -149,7 +148,7 @@ export function FinalizePeriodModal({
 
         try {
             // Use the unified endpoint in ReportController
-            const response = await authFetch(`${API_BASE}/reports/periods/${periodId}/finalize/revert`, {
+            const response = await authFetch(`${API_BASE_URL}/reports/periods/${periodId}/finalize/revert`, {
                 method: 'POST'
             });
             const result = await response.json();

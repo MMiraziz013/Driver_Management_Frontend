@@ -5,8 +5,7 @@ import { DriverCard } from "@/components/drivers/DriverCard";
 import { AddDriverModal } from './AddDriverModal';
 import { EditDriverModal } from './EditDriverModal';
 import { useAuthFetch, useAuth } from '@/auth/AuthContext';
-
-const API_BASE = 'http://192.168.68.123:8080/api';
+import { API_BASE_URL } from '@/config/api';
 
 interface DriverFront {
     id: string;
@@ -64,7 +63,7 @@ export function DriversPage() {
         if (!window.confirm("Are you sure you want to delete this driver?")) return;
 
         try {
-            const response = await authFetch(`${API_BASE}/drivers/${id}`, {
+            const response = await authFetch(`${API_BASE_URL}/drivers/${id}`, {
                 method: 'DELETE'
             });
 
@@ -83,7 +82,7 @@ export function DriversPage() {
     const handleToggleStatus = async (id: string, currentStatus: boolean) => {
         try {
             // The endpoint toggles the status, so we just call it
-            const response = await authFetch(`${API_BASE}/drivers/${id}`, {
+            const response = await authFetch(`${API_BASE_URL}/drivers/${id}`, {
                 method: 'PUT'
             });
 

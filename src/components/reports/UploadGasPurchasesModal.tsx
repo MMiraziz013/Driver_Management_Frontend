@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { X, Upload, Loader2, AlertCircle, FileSpreadsheet, CheckCircle, Fuel } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
+import { API_BASE_URL } from '@/config/api';
 
-const API_BASE = "http://192.168.68.123:8080/api";
 
 interface ReportPeriod {
     id: number;
@@ -89,7 +89,7 @@ export function UploadGasPurchasesModal({ isOpen, onClose, onSuccess, periodId, 
         formData.append('file', file);
 
         try {
-            const response = await authFetch(`${API_BASE}/gas/purchases/upload/${selectedPeriodId}`, {
+            const response = await authFetch(`${API_BASE_URL}/gas/purchases/upload/${selectedPeriodId}`, {
                 method: 'POST',
                 body: formData,
             });

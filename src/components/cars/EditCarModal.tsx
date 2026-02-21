@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 
 interface Vehicle {
     id: number;
@@ -23,8 +24,6 @@ interface EditCarModalProps {
     onClose: () => void;
     onSuccess: () => void;
 }
-
-const API_BASE = 'http://192.168.68.123:8080/api';
 
 const CATEGORY_MAP: Record<string, number> = { 'B': 1, 'C': 2, 'D': 3 };
 
@@ -62,7 +61,7 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
         const fetchVehicleTypes = async () => {
             setIsLoadingTypes(true);
             try {
-                const response = await authFetch(`${API_BASE}/vehicle-types`);
+                const response = await authFetch(`${API_BASE_URL}/vehicle-types`);
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/json')) {
                     console.warn('Vehicle types endpoint not available');
@@ -139,7 +138,7 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
         };
 
         try {
-            const response = await authFetch(`${API_BASE}/vehicles`, {
+            const response = await authFetch(`${API_BASE_URL}/vehicles`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dto)

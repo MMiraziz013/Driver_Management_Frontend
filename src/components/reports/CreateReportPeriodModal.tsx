@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { X, Loader2, AlertCircle, Calendar } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
-
-const API_BASE = "http://192.168.68.123:8080/api";
+import { API_BASE_URL } from '@/config/api';
 
 interface CreateReportPeriodModalProps {
     isOpen: boolean;
@@ -43,7 +42,7 @@ export function CreateReportPeriodModal({ isOpen, onClose, onSuccess }: CreateRe
                 endDate: endDate
             });
 
-            const response = await authFetch(`${API_BASE}/report-periods?${params.toString()}`, {
+            const response = await authFetch(`${API_BASE_URL}/report-periods?${params.toString()}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

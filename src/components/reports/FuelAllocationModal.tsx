@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertCircle, Fuel, Download, CheckCircle, AlertTriangle, Car } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
-
-const API_BASE = "http://192.168.68.123:8080/api";
+import { API_BASE_URL } from '@/config/api';
 
 interface VehicleFuelStatus {
     vehicleId: number;
@@ -63,7 +62,7 @@ export function FuelAllocationModal({ isOpen, onClose, periodId }: FuelAllocatio
         setError(null);
 
         try {
-            const response = await authFetch(`${API_BASE}/fuel/status/${periodId}`);
+            const response = await authFetch(`${API_BASE_URL}/fuel/status/${periodId}`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -87,7 +86,7 @@ export function FuelAllocationModal({ isOpen, onClose, periodId }: FuelAllocatio
         setError(null);
 
         try {
-            const response = await authFetch(`${API_BASE}/fuel/allocate/${periodId}`, {
+            const response = await authFetch(`${API_BASE_URL}/fuel/allocate/${periodId}`, {
                 method: 'POST'
             });
 
@@ -107,7 +106,7 @@ export function FuelAllocationModal({ isOpen, onClose, periodId }: FuelAllocatio
 
     const handleDownloadReport = async () => {
         try {
-            const response = await authFetch(`${API_BASE}/fuel/export/${periodId}`);
+            const response = await authFetch(`${API_BASE_URL}/fuel/export/${periodId}`);
 
             if (!response.ok) {
                 alert("Export failed. Please run allocation first.");

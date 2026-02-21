@@ -3,6 +3,7 @@ import { Plus, Loader2, RefreshCw, CarFront, Trash2, Pencil, ChevronDown, Chevro
 import { AddCarModal } from './AddCarModal';
 import { EditCarModal } from "@/components/cars/EditCarModal";
 import { useAuthFetch } from '@/auth/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 
 // Matching your C# GetVehicleDto
 interface Vehicle {
@@ -20,8 +21,6 @@ interface Vehicle {
     initialFuelLevel: number | null;
     currentMileage: number | null;
 }
-
-const API_BASE = 'http://192.168.68.123:8080/api';
 
 /**
  * Normalizes the backend response (0, 1, 2, 3 or "B", "C", "D")
@@ -86,7 +85,7 @@ export function CarsPage() {
         try {
             setIsLoading(true);
             setError(null);
-            const response = await authFetch(`${API_BASE}/vehicles`);
+            const response = await authFetch(`${API_BASE_URL}/vehicles`);
             const result = await response.json();
 
             if (response.ok && result.data) {
@@ -108,7 +107,7 @@ export function CarsPage() {
         setTogglingStatus(prev => new Set(prev).add(id));
 
         try {
-            const response = await authFetch(`${API_BASE}/vehicles/${id}`, {
+            const response = await authFetch(`${API_BASE_URL}/vehicles/${id}`, {
                 method: 'PUT',
             });
 
@@ -148,7 +147,7 @@ export function CarsPage() {
         if (!window.confirm("Are you sure you want to delete this vehicle?")) return;
 
         try {
-            const response = await authFetch(`${API_BASE}/vehicles/${id}`, {
+            const response = await authFetch(`${API_BASE_URL}/vehicles/${id}`, {
                 method: 'DELETE',
             });
 

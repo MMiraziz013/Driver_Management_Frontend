@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import { API_BASE_URL } from '@/config/api';
 
 interface EditDriverModalProps {
     isOpen: boolean;
@@ -82,7 +83,7 @@ export function EditDriverModal({ isOpen, driver, onClose, onSuccess }: EditDriv
         };
 
         try {
-            const response = await fetch('http://192.168.68.123:8080/api/drivers', {
+            const response = await fetch(`${API_BASE_URL}/drivers`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(dto)

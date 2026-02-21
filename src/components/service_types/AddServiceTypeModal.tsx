@@ -1,14 +1,13 @@
 import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 
 interface AddServiceTypeModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSuccess: () => void;
 }
-
-const API_BASE = "http://192.168.68.123:8080/api";
 
 export function AddServiceTypeModal({ isOpen, onClose, onSuccess }: AddServiceTypeModalProps) {
     const authFetch = useAuthFetch();
@@ -34,7 +33,7 @@ export function AddServiceTypeModal({ isOpen, onClose, onSuccess }: AddServiceTy
         };
 
         try {
-            const response = await authFetch(`${API_BASE}/service-type`, {
+            const response = await authFetch(`${API_BASE_URL}/service-type`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

@@ -1,8 +1,7 @@
 "use client"
+import { API_BASE_URL } from '@/config/api';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
-const API_BASE = "http://192.168.68.123:8080/api";
 
 interface User {
     id: number;
@@ -120,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async (username: string, password: string): Promise<{ success: boolean; message: string }> => {
         try {
-            const response = await fetch(`${API_BASE}/login`, {
+            const response = await fetch(`${API_BASE_URL}/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -164,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const register = async (data: RegisterData): Promise<{ success: boolean; message: string }> => {
         try {
-            const response = await fetch(`${API_BASE}/user/register`, {
+            const response = await fetch(`${API_BASE_URL}/user/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

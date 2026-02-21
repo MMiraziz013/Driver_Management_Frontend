@@ -22,8 +22,7 @@ import { UploadGasPurchasesModal } from "./UploadGasPurchasesModal";
 import { FuelAllocationModal } from "./FuelAllocationModal";
 import { FinalizePeriodModal } from "./FinalizePeriodModal";
 import {useAuthFetch} from "@/auth/AuthContext";
-
-const API_BASE = "http://192.168.68.123:8080/api";
+import { API_BASE_URL } from '@/config/api';
 
 interface ReportPeriod {
     id: number;
@@ -86,7 +85,7 @@ export function ReportsPage() {
 
     const fetchPeriods = async () => {
         try {
-            const response = await authFetch(`${API_BASE}/report-periods`);
+            const response = await authFetch(`${API_BASE_URL}/report-periods`);
 
             if (response.status === 204 || response.headers.get("content-length") === "0") {
                 setPeriods([]);

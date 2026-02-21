@@ -1,4 +1,7 @@
 // Assuming your API returns an array of Driver objects
+import { API_BASE_URL } from '@/config/api';
+
+
 interface DriverFront {
     id: string;
     fullName: string;
@@ -24,8 +27,6 @@ interface PaginatedResponse<T> {
     totalPages: number;
     statusCode: number; // Or a similar status field
 }
-
-const API_BASE_URL = "http://192.168.68.123:8080/api";
 
 /**
  * Fetches all drivers from the backend API.

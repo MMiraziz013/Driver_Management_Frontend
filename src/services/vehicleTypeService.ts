@@ -1,4 +1,5 @@
 // src/services/vehicleTypeService.ts
+import { API_BASE_URL } from '@/config/api';
 
 // Define the expected structure for a single Vehicle Type
 interface VehicleType {
@@ -15,9 +16,6 @@ interface PaginatedResponse<T> {
     totalPages: number;
     statusCode: number;
 }
-
-// Retrieve API base URL from environment variables
-const API_BASE_URL = "http://192.168.68.123:8080/api";
 
 /**
  * Fetches vehicle types from the backend API, including required pagination filters.

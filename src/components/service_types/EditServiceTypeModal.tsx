@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 
 interface ServiceType {
     id: number;
@@ -14,8 +15,6 @@ interface EditServiceTypeModalProps {
     onClose: () => void;
     onSuccess: () => void;
 }
-
-const API_BASE = "http://192.168.68.123:8080/api";
 
 export function EditServiceTypeModal({ isOpen, serviceType, onClose, onSuccess }: EditServiceTypeModalProps) {
     const authFetch = useAuthFetch();
@@ -45,7 +44,7 @@ export function EditServiceTypeModal({ isOpen, serviceType, onClose, onSuccess }
         };
 
         try {
-            const response = await authFetch(`${API_BASE}/service-type`, {
+            const response = await authFetch(`${API_BASE_URL}/service-type`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),

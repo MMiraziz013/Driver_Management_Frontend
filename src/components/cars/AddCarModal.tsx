@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
+import { API_BASE_URL } from '@/config/api';
 
 interface AddCarModalProps {
     isOpen: boolean;
@@ -12,8 +13,6 @@ interface VehicleType {
     id: number;
     name: string;
 }
-
-const API_BASE = 'http://192.168.68.123:8080/api';
 
 const LICENSE_CATEGORIES = [
     { label: 'Category B', value: 1 },
@@ -51,7 +50,7 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
 
     useEffect(() => {
         if (isOpen) {
-            authFetch(`${API_BASE}/vehicle-types`)
+            authFetch(`${API_BASE_URL}/vehicle-types`)
                 .then(res => res.json())
                 .then(result => setVehicleTypes(result.data || []))
                 .catch(err => console.error("Error fetching types:", err));
@@ -91,7 +90,7 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
         };
 
         try {
-            const response = await authFetch(`${API_BASE}/vehicles`, {
+            const response = await authFetch(`${API_BASE_URL}/vehicles`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
