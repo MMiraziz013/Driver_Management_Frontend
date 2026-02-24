@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Pencil, Trash2, MapPin, Briefcase, CreditCard, Loader2 } from 'lucide-react';
+import { VacationStatusBadge } from '@/components/drivers/VacationStatusBadge';
 
 interface DriverFront {
     id: string;
@@ -104,6 +105,8 @@ export function DriverCard({ driver, onEdit, onDelete, onToggleStatus }: DriverC
                             )}
                         </button>
                     </div>
+                    <VacationStatusBadge driverId={driver.id} compact />
+
                 </div>
             </div>
 

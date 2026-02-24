@@ -3,7 +3,7 @@
 "use client";
 
 import React from 'react';
-import { Car, Users, Truck, FileText, Settings, PanelLeftIcon, Tags } from 'lucide-react';
+import {Car, Users, Truck, FileText, Settings, PanelLeftIcon, Tags, Calendar} from 'lucide-react';
 
 // Import structural components and hooks from SidebarBase.tsx
 import {
@@ -20,8 +20,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { useIsMobile } from './ui/use-mobile';
 
 // --- YOUR ORIGINAL COMPONENT INTERFACE ---
-// Added 'service-types' to the Page type
-export type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings' | 'service-types';
+export type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings' | 'service-types' | 'vacations';
 
 interface SidebarProps {
     currentPage: Page;
@@ -36,6 +35,7 @@ function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
         { id: 'cars' as Page, label: 'Cars', icon: Car },
         { id: 'service-types' as Page, label: 'Service Types', icon: Tags },
         { id: 'reports' as Page, label: 'Reports', icon: FileText },
+        {id: 'vacations' as Page, label: 'Vacations', icon: Calendar}
     ];
 
     // We remove the complex structural components like SidebarHeader and SidebarMenu
@@ -46,8 +46,8 @@ function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
         <div className="flex flex-col h-full bg-white">
 
             {/* Header/Logo Area */}
-            <div className="p-6 border-b border-slate-200 shrink-0">
-                <div className="w-32 h-10 bg-slate-200 rounded flex items-center justify-center text-slate-400">
+            <div className="p-7 border-b border-slate-200 shrink-">
+                <div className="w-50 h-20 bg-slate-200 rounded flex items-center justify-center text-slate-400">
                     <img
                         src="/logo.png"
                         alt="Company Logo"

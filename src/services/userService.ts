@@ -1,5 +1,5 @@
 // src/services/userService.ts
-import { API_BASE_URL } from "../config";
+import { API_BASE_URL } from "@/config/api";
 
 export interface User {
     id: number;

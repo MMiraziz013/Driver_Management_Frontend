@@ -29,6 +29,9 @@ import { ReportsPage } from "@/components/reports/ReportsPage";
 import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ServiceTypesPage } from "@/components/service_types/ServiceTypesPage";
 
+import { DriverVacationsPage } from '@/components/drivers/DriverVacationPage';
+
+
 // Loading component
 function LoadingScreen() {
     return (
@@ -69,6 +72,8 @@ function AuthenticatedApp() {
                 return <SettingsPage />;
             case 'service-types':
                 return <ServiceTypesPage />;
+            case 'vacations':
+                return <DriverVacationsPage/>;
             default:
                 return <DriversPage />;
         }

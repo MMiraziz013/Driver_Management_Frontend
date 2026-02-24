@@ -138,7 +138,7 @@ export function ReportsPage() {
         setProcessingId(periodId);
         setProcessingAction("assignment");
         try {
-            const response = await authFetch(`${API_BASE}/reports/assign/${periodId}`, {
+            const response = await authFetch(`${API_BASE_URL}/reports/assign/${periodId}`, {
                 method: 'POST'
             });
             const result = await response.json();
@@ -167,7 +167,7 @@ export function ReportsPage() {
         setProcessingId(periodId);
         setProcessingAction("fuel");
         try {
-            const response = await authFetch(`${API_BASE}/gas/allocate/${periodId}`, {
+            const response = await authFetch(`${API_BASE_URL}/gas/allocate/${periodId}`, {
                 method: 'POST'
             });
             const result = await response.json();
@@ -190,7 +190,7 @@ export function ReportsPage() {
     const handleDownloadAssignments = async (periodId: number, description: string) => {
         setOpenExportMenuId(null);
         try {
-            const response = await authFetch(`${API_BASE}/reports/export/${periodId}`);
+            const response = await authFetch(`${API_BASE_URL}/reports/export/${periodId}`);
 
             if (!response.ok) {
                 alert("❌ Export failed. Make sure assignments were generated first.");
@@ -216,7 +216,7 @@ export function ReportsPage() {
     const handleDownloadFuelReport = async (periodId: number, description: string) => {
         setOpenExportMenuId(null);
         try {
-            const response = await authFetch(`${API_BASE}/gas/export-detailed/${periodId}`);
+            const response = await authFetch(`${API_BASE_URL}/gas/export-detailed/${periodId}`);
 
             if (!response.ok) {
                 alert("❌ Export failed. Make sure fuel allocation was run first.");
@@ -245,7 +245,7 @@ export function ReportsPage() {
         setProcessingAction("waybill");
 
         try {
-            const response = await authFetch(`${API_BASE}/reports/export-waybill/${periodId}`);
+            const response = await authFetch(`${API_BASE_URL}/reports/export-waybill/${periodId}`);
 
             if (!response.ok) {
                 const errorText = await response.text();
@@ -285,7 +285,7 @@ export function ReportsPage() {
         setOpenExportMenuId(null);
 
         try {
-            const response = await authFetch(`${API_BASE}/reports/journeys/${period.id}`);
+            const response = await authFetch(`${API_BASE_URL}/reports/journeys/${period.id}`);
 
             if (response.ok) {
                 const result = await response.json();
