@@ -200,8 +200,9 @@ export function DriversPage() {
             <EditDriverModal
                 isOpen={isEditModalOpen}
                 driver={selectedDriver}
+                token={token}
                 onClose={handleCloseEditModal}
-                onSuccess={fetchDriverData}
+                onSuccess={fetchDriverData}  // Fixed: was handleRefresh
             />
         </div>
     );

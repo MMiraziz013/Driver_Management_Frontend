@@ -3,7 +3,7 @@
 "use client";
 
 import React from 'react';
-import {Car, Users, Truck, FileText, Settings, PanelLeftIcon, Tags, Calendar} from 'lucide-react';
+import { Car, Users, Truck, FileText, Settings, PanelLeftIcon, Tags, Calendar, Route } from 'lucide-react';
 
 // Import structural components and hooks from SidebarBase.tsx
 import {
@@ -20,7 +20,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '
 import { useIsMobile } from './ui/use-mobile';
 
 // --- YOUR ORIGINAL COMPONENT INTERFACE ---
-export type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings' | 'service-types' | 'vacations';
+export type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports' | 'settings' | 'service-types' | 'vacations' | 'trips';
 
 interface SidebarProps {
     currentPage: Page;
@@ -34,8 +34,9 @@ function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
         { id: 'vehicle-types' as Page, label: 'Vehicle Types', icon: Truck },
         { id: 'cars' as Page, label: 'Cars', icon: Car },
         { id: 'service-types' as Page, label: 'Service Types', icon: Tags },
+        { id: 'trips' as Page, label: 'Trips', icon: Route },  // NEW
         { id: 'reports' as Page, label: 'Reports', icon: FileText },
-        {id: 'vacations' as Page, label: 'Vacations', icon: Calendar}
+        { id: 'vacations' as Page, label: 'Vacations', icon: Calendar }
     ];
 
     // We remove the complex structural components like SidebarHeader and SidebarMenu

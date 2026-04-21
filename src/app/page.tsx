@@ -30,6 +30,7 @@ import { SettingsPage } from "@/components/settings/SettingsPage";
 import { ServiceTypesPage } from "@/components/service_types/ServiceTypesPage";
 
 import { DriverVacationsPage } from '@/components/drivers/DriverVacationPage';
+import {TripsPage} from "@/components/trips/TripsPage";
 
 
 // Loading component
@@ -74,6 +75,8 @@ function AuthenticatedApp() {
                 return <ServiceTypesPage />;
             case 'vacations':
                 return <DriverVacationsPage/>;
+            case 'trips':
+                return <TripsPage/>;
             default:
                 return <DriversPage />;
         }

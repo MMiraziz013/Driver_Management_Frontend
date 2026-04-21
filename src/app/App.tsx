@@ -8,6 +8,9 @@ import { CarsPage } from '@/components/cars/CarsPage';
 import { ReportsPage } from '@/components/reports/ReportsPage';
 import { SettingsPage } from '@/components/settings/SettingsPage';
 import { ServiceTypesPage } from '@/components/service_types/ServiceTypesPage';
+import { DriverVacationsPage } from '@/components/drivers/DriverVacationPage';
+import { TripsPage } from '@/components/trips/TripsPage';
+
 
 // Auth imports
 import { AuthProvider, useAuth } from '@/auth/AuthContext';
@@ -50,6 +53,10 @@ function AuthenticatedApp() {
                 return <SettingsPage />;
             case 'service-types':
                 return <ServiceTypesPage />;
+            case 'vacations':
+                return <DriverVacationsPage />;
+            case 'trips':
+                return <TripsPage />;
             default:
                 return <DriversPage />;
         }

@@ -1,6 +1,4 @@
-// Assuming your API returns an array of Driver objects
 import { API_BASE_URL } from '@/config/api';
-
 
 interface DriverFront {
     id: string;
@@ -8,36 +6,40 @@ interface DriverFront {
     age: number;
     address: string;
     employmentType: string;
-    licenseCategory: string; // Backend sends a single string 'Category'
-    isActive: boolean;       // Backend sends 'IsActive'
+    licenseCategory: string;
+    isActive: boolean;
 }
 
 export interface AddDriverDto {
     fullName: string;
-    birthYear: string; // Will send as "YYYY-MM-DD"
+    birthYear: string;
     address: string;
-    driverCategories: string; // Backend expects Enum (string from frontend)
-    employmentType: string;   // Backend expects Enum (string from frontend)
+    driverCategories: string;
+    employmentType: string;
+}
+
+export interface UpdateDriverDto {
+    id: number;
+    fullName: string | null;
+    birthYear: string;
+    address: string | null;
+    driverCategory: number;
+    employmentType: number;
 }
 
 interface PaginatedResponse<T> {
-    data: T[]; // The array of items
+    data: T[];
     pageNumber: number;
     pageSize: number;
     totalPages: number;
-    statusCode: number; // Or a similar status field
+    statusCode: number;
 }
 
-/**
- * Fetches all drivers from the backend API.
- * GET http://localhost:5147/api/drivers
- */
 export async function getAllDrivers(
     token: string,
     pageNumber: number = 1,
     pageSize: number = 30
-): Promise<DriverFront[]> { // NOTE: Still promises an array to the component
-
+): Promise<DriverFront[]> {
     const queryParams = new URLSearchParams({
         PageNumber: pageNumber.toString(),
         PageSize: pageSize.toString(),
@@ -50,7 +52,7 @@ export async function getAllDrivers(
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                "Authorization": `Bearer ${token}`
+                'Authorization': `Bearer ${token}`
             },
         });
 
@@ -59,13 +61,7 @@ export async function getAllDrivers(
             throw new Error(`Failed to fetch drivers: ${response.status} ${response.statusText}. Details: ${errorText}`);
         }
 
-        // 🚨 CRUCIAL CHANGE: Read the entire response object
         const paginatedResponse: PaginatedResponse<DriverFront> = await response.json();
-
-        console.log(paginatedResponse);
-
-        // 🚨 CRUCIAL CHANGE: Return only the 'data' array to the component
-        // This array is what drivers.map expects.
         return paginatedResponse.data || [];
 
     } catch (error) {
@@ -89,5 +85,23 @@ export async function addDriver(dto: AddDriverDto, token: string): Promise<void>
     if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to add driver');
+    }
+}
+
+export async function updateDriver(dto: UpdateDriverDto, token: string): Promise<void> {
+    const endpoint = `${API_BASE_URL}/drivers`;
+
+    const response = await fetch(endpoint, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(dto),
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || 'Failed to update driver');
     }
 }
