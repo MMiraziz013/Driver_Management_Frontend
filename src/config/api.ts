@@ -2,12 +2,17 @@
 // Automatically detects the correct API URL based on how you access the frontend
 
 function getApiBaseUrl(): string {
-    // Server-side rendering fallback
-    if (typeof window === 'undefined') {
-        return process.env.NEXT_PUBLIC_API_URL || 'http://192.168.68.115:8080/api';
+    // 1. FORCE the environment variable first (Vercel production build)
+    if (process.env.NEXT_PUBLIC_API_URL) {
+        return process.env.NEXT_PUBLIC_API_URL;
     }
 
-    // Client-side: use the same hostname as the frontend
+    // 2. Server-side rendering fallback if no env variable exists
+    if (typeof window === 'undefined') {
+        return 'http://62.84.182.181:8080/api';
+    }
+
+    // 3. Local development fallback (e.g., localhost)
     const host = window.location.hostname;
     return `http://${host}:8080/api`;
 }
