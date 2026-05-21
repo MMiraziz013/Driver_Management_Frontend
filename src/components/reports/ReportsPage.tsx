@@ -14,7 +14,8 @@ import {
     Lock,
     CheckCircle,
     Map,
-    ClipboardList
+    ClipboardList,
+    Trash2  // Add this
 } from "lucide-react";
 import { CreateReportPeriodModal } from "./CreateReportPeriodModal";
 import { UploadTripsModal } from "./UploadTripsModal";
@@ -60,6 +61,9 @@ interface JourneyDto {
 
 export function ReportsPage() {
     const authFetch = useAuthFetch();
+
+    const [deletingPeriodId, setDeletingPeriodId] = useState<number | null>(null);
+    const [confirmDeletePeriod, setConfirmDeletePeriod] = useState<ReportPeriod | null>(null);
     
     const [periods, setPeriods] = useState<ReportPeriod[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -321,6 +325,41 @@ export function ReportsPage() {
     const handleOpenFinalize = (period: ReportPeriod) => {
         setSelectedPeriod(period);
         setIsFinalizeModalOpen(true);
+    };
+
+    // Delete report period
+    const handleDeletePeriod = async (period: ReportPeriod) => {
+        if (isPeriodFinalized(period)) {
+            alert("⚠️ Cannot delete a finalized period. Revert finalization first.");
+            return;
+        }
+
+        setConfirmDeletePeriod(period);
+    };
+
+    const confirmDelete = async () => {
+        if (!confirmDeletePeriod) return;
+
+        setDeletingPeriodId(confirmDeletePeriod.id);
+        try {
+            const response = await authFetch(`${API_BASE_URL}/report-periods/${confirmDeletePeriod.id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                alert(`✅ ${result.data || result.message || 'Period deleted successfully'}`);
+                fetchPeriods();
+            } else {
+                alert("❌ Error: " + (result.errors?.join(', ') || result.message || "Delete failed"));
+            }
+        } catch (error) {
+            alert("❌ Failed to delete period.");
+        } finally {
+            setDeletingPeriodId(null);
+            setConfirmDeletePeriod(null);
+        }
     };
 
     const formatDateRange = (startDate: string, endDate: string) => {
@@ -624,6 +663,20 @@ export function ReportsPage() {
                                                     </div>
                                                 )}
                                             </div>
+                                            
+                                            {/* Delete Button */}
+                                            <button
+                                                onClick={() => handleDeletePeriod(period)}
+                                                disabled={finalized || deletingPeriodId === period.id}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title={finalized ? "Cannot delete finalized period" : "Delete period and all trips"}
+                                            >
+                                                {deletingPeriodId === period.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Trash2 className="w-4 h-4" />
+                                                )}
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -844,6 +897,53 @@ export function ReportsPage() {
                                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
                             >
                                 Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Delete Confirmation Modal */}
+            {confirmDeletePeriod && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-3 bg-red-100 rounded-full">
+                                <AlertTriangle className="w-6 h-6 text-red-600" />
+                            </div>
+                            <div>
+                                <h3 className="text-lg font-semibold text-gray-900">Delete Report Period?</h3>
+                                <p className="text-sm text-gray-500">This action cannot be undone.</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                            <p className="text-sm text-red-800">
+                                <strong>"{confirmDeletePeriod.description}"</strong>
+                            </p>
+                            <p className="text-sm text-red-600 mt-1">
+                                This will permanently delete the period and all {confirmDeletePeriod.tripCount ?? 'associated'} trips.
+                            </p>
+                        </div>
+
+                        <div className="flex justify-end gap-3">
+                            <button
+                                onClick={() => setConfirmDeletePeriod(null)}
+                                disabled={deletingPeriodId !== null}
+                                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={deletingPeriodId !== null}
+                                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:bg-red-400"
+                            >
+                                {deletingPeriodId !== null ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                )}
+                                Delete Period
                             </button>
                         </div>
                     </div>

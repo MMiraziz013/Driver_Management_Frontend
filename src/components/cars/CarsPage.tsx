@@ -1,7 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Loader2, RefreshCw, CarFront, Trash2, Pencil, ChevronDown, ChevronRight, Fuel, Gauge, Droplets } from 'lucide-react';
+import {
+    Plus, Loader2, RefreshCw, CarFront, Trash2, Pencil, ChevronDown, ChevronRight,
+    Fuel, Gauge, Droplets, DollarSign, Calendar
+} from 'lucide-react';
 import { AddCarModal } from './AddCarModal';
 import { EditCarModal } from "@/components/cars/EditCarModal";
+import { VehicleUnavailablePeriodsModal } from './VehicleUnavailablePeriodsModal';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
 
@@ -20,6 +24,9 @@ interface Vehicle {
     fuelType: string | null;
     initialFuelLevel: number | null;
     currentMileage: number | null;
+    purchaseCostUsd?: number | null;
+    planMonths?: number | null;
+    activeFrom?: string | null;
 }
 
 /**
@@ -68,6 +75,9 @@ export function CarsPage() {
     const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
     const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
     const [togglingStatus, setTogglingStatus] = useState<Set<number>>(new Set());
+
+    // Unavailable periods modal
+    const [unavailableModalVehicle, setUnavailableModalVehicle] = useState<Vehicle | null>(null);
 
     const toggleRowExpansion = (id: number) => {
         setExpandedRows(prev => {
@@ -288,16 +298,25 @@ export function CarsPage() {
                                             </button>
                                         </td>
                                         <td className="px-4 py-4 text-right">
-                                            <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    onClick={() => setUnavailableModalVehicle(car)}
+                                                    className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-all"
+                                                    title="Manage unavailable periods"
+                                                >
+                                                    <Calendar className="w-4 h-4" />
+                                                </button>
                                                 <button
                                                     onClick={() => handleEdit(car)}
                                                     className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all"
+                                                    title="Edit vehicle"
                                                 >
                                                     <Pencil className="w-4 h-4" />
                                                 </button>
                                                 <button
                                                     onClick={() => handleDelete(car.id)}
                                                     className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-all"
+                                                    title="Delete vehicle"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </button>
@@ -309,7 +328,7 @@ export function CarsPage() {
                                     {isExpanded && (
                                         <tr className="bg-slate-50">
                                             <td colSpan={8} className="px-4 py-4">
-                                                <div className="ml-10 grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div className="ml-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                                     {/* Fuel Information */}
                                                     <div className="bg-white rounded-lg border border-slate-200 p-4">
                                                         <div className="flex items-center gap-2 mb-3">
@@ -373,6 +392,44 @@ export function CarsPage() {
                                                                     {car.currentMileage ? `${car.currentMileage.toLocaleString()} km` : 'N/A'}
                                                                 </span>
                                                             </div>
+                                                            {car.activeFrom && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-slate-500">Active From:</span>
+                                                                    <span className="font-medium text-slate-800">
+                                                                        {new Date(car.activeFrom).toLocaleDateString()}
+                                                                    </span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Financial Information */}
+                                                    <div className="bg-white rounded-lg border border-slate-200 p-4">
+                                                        <div className="flex items-center gap-2 mb-3">
+                                                            <DollarSign className="w-4 h-4 text-emerald-500" />
+                                                            <h4 className="font-semibold text-slate-800">Financial</h4>
+                                                        </div>
+                                                        <div className="space-y-2 text-sm">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Purchase Cost:</span>
+                                                                <span className="font-medium text-slate-800">
+                                                                    {car.purchaseCostUsd ? `$${car.purchaseCostUsd.toLocaleString()}` : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Plan Months:</span>
+                                                                <span className="font-medium text-slate-800">
+                                                                    {car.planMonths || 13}
+                                                                </span>
+                                                            </div>
+                                                            {car.purchaseCostUsd && car.planMonths && (
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-slate-500">Monthly Plan:</span>
+                                                                    <span className="font-medium text-emerald-600">
+                                                                        ${(car.purchaseCostUsd / car.planMonths).toFixed(2)}
+                                                                    </span>
+                                                                </div>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -407,6 +464,16 @@ export function CarsPage() {
                 onClose={handleCloseEditModal}
                 onSuccess={fetchVehicles}
             />
+
+            {/* Unavailable Periods Modal */}
+            {unavailableModalVehicle && (
+                <VehicleUnavailablePeriodsModal
+                    isOpen={!!unavailableModalVehicle}
+                    vehicleId={unavailableModalVehicle.id}
+                    vehiclePlate={unavailableModalVehicle.plateNumber}
+                    onClose={() => setUnavailableModalVehicle(null)}
+                />
+            )}
         </div>
     );
 }

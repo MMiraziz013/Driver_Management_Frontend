@@ -10,6 +10,9 @@ import { LoginPage } from '@/auth/LoginPage';
 import { RegisterPage } from '@/auth/RegisterPage';
 import { NoPermissionBanner } from '@/auth/PermissionComponents';
 import { Loader2 } from 'lucide-react';
+import { BonusesPage } from '@/components/bonuses/BonusesPage';
+import { BonusSettingsPage } from '@/components/bonuses/BonusSettingsPage';
+import CompaniesPage from '@/components/companies/CompaniesPage';
 
 // Sidebar components - import Page type from Sidebar to avoid duplicate type definitions
 import {
@@ -31,6 +34,7 @@ import { ServiceTypesPage } from "@/components/service_types/ServiceTypesPage";
 
 import { DriverVacationsPage } from '@/components/drivers/DriverVacationPage';
 import {TripsPage} from "@/components/trips/TripsPage";
+import AccountingPage from '@/components/accounting/AccountingPage';
 
 
 // Loading component
@@ -77,8 +81,16 @@ function AuthenticatedApp() {
                 return <DriverVacationsPage/>;
             case 'trips':
                 return <TripsPage/>;
+            case 'bonuses':
+                return <BonusesPage />;
+            case 'bonus-settings':
+                return <BonusSettingsPage />;
+            case 'accounting':
+                return <AccountingPage />;
+            case 'companies':
+                return <CompaniesPage />;
             default:
-                return <DriversPage />;
+                return <ReportsPage />;
         }
     };
 

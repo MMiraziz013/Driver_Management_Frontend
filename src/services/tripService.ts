@@ -120,3 +120,20 @@ export async function deleteTrip(tripId: number, token: string): Promise<void> {
         throw new Error('Failed to delete trip');
     }
 }
+
+export async function deleteReportPeriod(periodId: number, token: string): Promise<string> {
+    const response = await fetch(`${API_BASE_URL}/reports/periods/${periodId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.errors?.join(', ') || 'Failed to delete report period');
+    }
+
+    const data = await response.json();
+    return data.data || data.message;
+}

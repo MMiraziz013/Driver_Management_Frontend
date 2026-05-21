@@ -13,9 +13,12 @@ interface Vehicle {
     vehicleTypeName?: string;
     fuelTankCapacity?: number | null;
     fuelConsumptionPer100Km?: number | null;
-    fuelType?: string | null;  // Now a string
+    fuelType?: string | null;
     initialFuelLevel?: number | null;
     currentMileage?: number | null;
+    purchaseCostUsd?: number | null;
+    planMonths?: number | null;
+    activeFrom?: string | null;  // NEW
 }
 
 interface EditCarModalProps {
@@ -27,7 +30,6 @@ interface EditCarModalProps {
 
 const CATEGORY_MAP: Record<string, number> = { 'B': 1, 'C': 2, 'D': 3 };
 
-// Fuel types as strings (matching backend expectations)
 const FUEL_TYPES = [
     { label: 'АИ-95', value: 'АИ-95' },
     { label: 'АИ-92', value: 'АИ-92' },
@@ -52,6 +54,13 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
     const [fuelType, setFuelType] = useState<string>('АИ-95');
     const [initialFuelLevel, setInitialFuelLevel] = useState<string>('');
     const [currentMileage, setCurrentMileage] = useState<string>('');
+
+    // Financial info
+    const [purchaseCostUsd, setPurchaseCostUsd] = useState<string>('');
+    const [planMonths, setPlanMonths] = useState<string>('13');
+
+    // Availability (NEW)
+    const [activeFrom, setActiveFrom] = useState<string>('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isLoadingTypes, setIsLoadingTypes] = useState(false);
@@ -114,6 +123,13 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
             setFuelType(vehicle.fuelType || 'АИ-95');
             setInitialFuelLevel(vehicle.initialFuelLevel?.toString() || '');
             setCurrentMileage(vehicle.currentMileage?.toString() || '');
+
+            // Set financial fields
+            setPurchaseCostUsd(vehicle.purchaseCostUsd?.toString() || '');
+            setPlanMonths(vehicle.planMonths?.toString() || '13');
+
+            // Set availability field (NEW)
+            setActiveFrom(vehicle.activeFrom ? new Date(vehicle.activeFrom).toISOString().split('T')[0] : '');
         }
     }, [vehicle]);
 
@@ -132,9 +148,12 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
             vehicleTypeId: vehicleTypeId,
             fuelTankCapacity: fuelTankCapacity ? parseFloat(fuelTankCapacity) : null,
             fuelConsumptionPer100Km: fuelConsumptionPer100Km ? parseFloat(fuelConsumptionPer100Km) : null,
-            fuelType: fuelType || null,  // Send as string
+            fuelType: fuelType || null,
             initialFuelLevel: initialFuelLevel ? parseFloat(initialFuelLevel) : null,
             currentMileage: currentMileage ? parseFloat(currentMileage) : null,
+            purchaseCostUsd: purchaseCostUsd ? parseFloat(purchaseCostUsd) : null,
+            planMonths: planMonths ? parseInt(planMonths) : 13,
+            activeFrom: activeFrom ? new Date(activeFrom).toISOString() : null,  // NEW
         };
 
         try {
@@ -158,6 +177,13 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
         } finally {
             setIsSubmitting(false);
         }
+    };
+
+    // Calculate monthly plan preview
+    const calculatePlan = () => {
+        const cost = parseFloat(purchaseCostUsd) || 0;
+        const months = parseInt(planMonths) || 13;
+        return cost > 0 && months > 0 ? (cost / months).toFixed(2) : '0.00';
     };
 
     return (
@@ -249,6 +275,64 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
                                 <option value="D">D - Large Vehicle / Bus</option>
                             </select>
                         </div>
+                    </div>
+
+                    {/* Availability Section (NEW) */}
+                    <div className="space-y-4 pt-4 border-t border-slate-200">
+                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Availability</h3>
+
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Active From</label>
+                            <input
+                                type="date"
+                                value={activeFrom}
+                                onChange={(e) => setActiveFrom(e.target.value)}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                Vehicle won't be assigned to trips or allocated fuel before this date. Leave empty for always available.
+                            </p>
+                        </div>
+                    </div>
+
+                    {/* Financial Section */}
+                    <div className="space-y-4 pt-4 border-t border-slate-200">
+                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Financial Information</h3>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Purchase Cost (USD)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={purchaseCostUsd}
+                                    onChange={(e) => setPurchaseCostUsd(e.target.value)}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="e.g. 45000"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-slate-700 mb-1">Plan Months</label>
+                                <input
+                                    type="number"
+                                    step="1"
+                                    min="1"
+                                    value={planMonths}
+                                    onChange={(e) => setPlanMonths(e.target.value)}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                    placeholder="13"
+                                />
+                            </div>
+                        </div>
+
+                        {purchaseCostUsd && (
+                            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                                <p className="text-sm text-indigo-700">
+                                    <span className="font-medium">Monthly Plan:</span> ${calculatePlan()} USD/month
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Fuel & Mileage Section */}

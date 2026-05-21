@@ -243,10 +243,12 @@ export function useAuth() {
 }
 
 // Helper hook for API calls with auth token
+// Helper hook for API calls with auth token
 export function useAuthFetch() {
     const { token, logout } = useAuth();
 
-    const authFetch = async (url: string, options: RequestInit = {}): Promise<Response> => {
+    // Changed 'url: string' to 'input: RequestInfo | URL' to match standard fetch definitions
+    const authFetch = async (input: RequestInfo | URL, options: RequestInit = {}): Promise<Response> => {
         const headers: HeadersInit = {
             ...(options.headers || {}),
         };
@@ -255,7 +257,8 @@ export function useAuthFetch() {
             (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await fetch(url, { ...options, headers });
+        // Pass 'input' instead of 'url' directly into fetch
+        const response = await fetch(input, { ...options, headers });
 
         // If 401, token is invalid/expired - logout
         if (response.status === 401) {

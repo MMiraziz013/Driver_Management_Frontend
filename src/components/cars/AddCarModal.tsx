@@ -20,7 +20,6 @@ const LICENSE_CATEGORIES = [
     { label: 'Category D', value: 3 },
 ];
 
-// Fuel types as strings (matching backend expectations)
 const FUEL_TYPES = [
     { label: 'АИ-95', value: 'АИ-95' },
     { label: 'АИ-92', value: 'АИ-92' },
@@ -45,6 +44,9 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
     const [initialFuelLevel, setInitialFuelLevel] = useState<string>('');
     const [currentMileage, setCurrentMileage] = useState<string>('');
 
+    // Availability (NEW)
+    const [activeFrom, setActiveFrom] = useState<string>('');
+
     const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -68,6 +70,7 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
         setFuelType('АИ-95');
         setInitialFuelLevel('');
         setCurrentMileage('');
+        setActiveFrom('');
     };
 
     if (!isOpen) return null;
@@ -84,9 +87,10 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
             requiredDriverCategory: category,
             fuelTankCapacity: fuelTankCapacity ? parseFloat(fuelTankCapacity) : null,
             fuelConsumptionPer100Km: fuelConsumptionPer100Km ? parseFloat(fuelConsumptionPer100Km) : null,
-            fuelType: fuelType || null,  // Send as string
+            fuelType: fuelType || null,
             initialFuelLevel: initialFuelLevel ? parseFloat(initialFuelLevel) : null,
             currentMileage: currentMileage ? parseFloat(currentMileage) : null,
+            activeFrom: activeFrom ? new Date(activeFrom).toISOString() : null,
         };
 
         try {
@@ -188,6 +192,24 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
                                     <option key={type.id} value={type.id}>{type.name}</option>
                                 ))}
                             </select>
+                        </div>
+                    </div>
+
+                    {/* Availability Section (NEW) */}
+                    <div className="space-y-4 pt-4 border-t border-slate-200">
+                        <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide">Availability</h3>
+
+                        <div>
+                            <label className="block text-sm font-bold text-black mb-1">Active From</label>
+                            <input
+                                type="date"
+                                value={activeFrom}
+                                onChange={(e) => setActiveFrom(e.target.value)}
+                                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-black focus:ring-2 focus:ring-indigo-500 outline-none"
+                            />
+                            <p className="text-xs text-slate-500 mt-1">
+                                Vehicle won't be assigned to trips or allocated fuel before this date. Leave empty for immediately available.
+                            </p>
                         </div>
                     </div>
 
