@@ -18,6 +18,11 @@ interface PaginatedResponse<T> {
     statusCode: number;
 }
 
+export interface AddVehicleTypeDto {
+    name: string;
+    description?: string;
+}
+
 /**
  * Fetches vehicle types from the backend API, including required pagination filters.
  * GET http://localhost:5147/api/vehicles?PageNumber=1&PageSize=10
@@ -80,6 +85,23 @@ export const getVehicleTypes = async (): Promise<any> => {
     const response = await axios.get(`${API_BASE_URL}/vehicle-types`, {
         headers: { Authorization: `Bearer ${token}` },
     });
+    return response.data;
+};
+
+export const addVehicleType = async (
+    token: string,
+    data: AddVehicleTypeDto
+): Promise<any> => {
+    const response = await axios.post(
+        `${API_BASE_URL}/vehicle-types/add`,
+        data,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        }
+    );
     return response.data;
 };
 
