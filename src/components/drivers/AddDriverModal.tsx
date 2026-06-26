@@ -30,12 +30,19 @@ export function AddDriverModal({ isOpen, onClose, onSuccess }: AddDriverModalPro
         e.preventDefault();
         setIsSubmitting(true);
 
+        // Create a mapping object for cleaner code
+        const employmentMap: Record<string, string> = {
+            'full-time': 'FullTime',
+            'part-time': 'PartTime',
+            'samarkand': 'Samarkand'
+        };
+
         const dto: AddDriverDto = {
             fullName,
-            birthYear: birthDate, // backend DTO calls it BirthYear but type is DateOnly
+            birthYear: birthDate,
             address,
             driverCategories: category,
-            employmentType: employmentType === 'full-time' ? 'FullTime' : 'PartTime' // Matching backend Enums
+            employmentType: employmentMap[employmentType] // Dynamically matches backend
         };
 
         try {
@@ -98,13 +105,21 @@ export function AddDriverModal({ isOpen, onClose, onSuccess }: AddDriverModalPro
 
                     <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Employment Type</label>
-                        <div className="grid grid-cols-2 gap-3">
-                            {['full-time', 'part-time'].map((type) => (
-                                <button key={type} type="button" onClick={() => setEmploymentType(type)}
-                                        className={`px-4 py-3 rounded-lg border text-sm capitalize ${employmentType === type
+                        {/* Added 'samarkand' to the array below */}
+                        <div className="grid grid-cols-3 gap-3">
+                            {['full-time', 'part-time', 'samarkand'].map((type) => (
+                                <button
+                                    key={type}
+                                    type="button"
+                                    onClick={() => setEmploymentType(type)}
+                                    className={`px-4 py-3 rounded-lg border text-sm capitalize transition-all ${
+                                        employmentType === type
                                             ? 'bg-indigo-50 border-indigo-600 text-indigo-700'
-                                            : 'bg-white border-slate-200 text-slate-600'}`}>
-                                    {type}
+                                            : 'bg-white border-slate-200 text-slate-600 hover:border-indigo-300'
+                                    }`}
+                                >
+                                    {/* Replaced hyphens with spaces for better display */}
+                                    {type.replace('-', ' ')}
                                 </button>
                             ))}
                         </div>

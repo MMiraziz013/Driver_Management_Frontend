@@ -679,7 +679,8 @@ export default function AccountingPage() {
                     </div>
 
                     {/* Month Selection */}
-                    <h3 className="text-sm font-medium text-slate-700 mb-2 mt-4">Select Months to Include</h3>
+                    <h3 className="text-sm font-medium text-slate-700 mb-2 mt-4">Select Months for Totals Calculation</h3>
+                    <p className="text-xs text-slate-500 mb-2">All months will be displayed, but totals are calculated only for selected months.</p>
                     <div className="flex gap-2 mb-2">
                         <button
                             onClick={selectAllMonths}
@@ -737,18 +738,28 @@ export default function AccountingPage() {
                 {/* Analysis Report Display */}
                 {analysisReport && (
                     <div className="space-y-6">
-                        {/* Exchange Rates Used */}
-                        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                            <span className="text-sm font-medium text-amber-800">Exchange Rates Used: </span>
-                            <span className="text-sm text-amber-700">
-                            {analysisReport.years.map(y => `${y}: ${analysisReport.exchangeRates[y]?.toLocaleString() || 'N/A'}`).join(' | ')}
-                        </span>
+                        {/* Exchange Rates & Selected Months Info */}
+                        <div className="flex flex-wrap gap-4">
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex-1">
+                                <span className="text-sm font-medium text-amber-800">Exchange Rates: </span>
+                                <span className="text-sm text-amber-700">
+                                {analysisReport.years.map(y => `${y}: ${analysisReport.exchangeRates[y]?.toLocaleString() || 'N/A'}`).join(' | ')}
+                            </span>
+                            </div>
+                            {isPartialYear && (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <span className="text-sm font-medium text-blue-800">Selected Months: </span>
+                                    <span className="text-sm text-blue-700">
+                                    {analysisReport.months.map(m => MONTHS[m - 1].substring(0, 3)).join(', ')}
+                                </span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Monthly Revenue Table */}
                         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                             <div className="bg-indigo-600 text-white px-4 py-3 font-medium">
-                                Monthly Revenue (UZS)
+                                Monthly Revenue (UZS) — All Months
                             </div>
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm">
@@ -763,19 +774,28 @@ export default function AccountingPage() {
                                     </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-100">
-                                    {analysisReport.monthlyData.map(row => (
-                                        <tr key={row.month} className="hover:bg-slate-50">
-                                            <td className="px-4 py-2 font-medium text-slate-700">{row.monthName}</td>
-                                            {analysisReport.years.map(year => (
-                                                <td key={year} className="px-4 py-2 text-right">
-                                                    {(row.amountsByYear[year] || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                    {analysisReport.monthlyData.map(row => {
+                                        const isSelected = analysisReport.months.includes(row.month);
+                                        return (
+                                            <tr
+                                                key={row.month}
+                                                className={isSelected ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-slate-50 opacity-60'}
+                                            >
+                                                <td className={`px-4 py-2 ${isSelected ? 'font-semibold text-slate-900' : 'text-slate-500'}`}>
+                                                    {row.monthName}
+                                                    {isSelected && <span className="ml-2 text-xs text-emerald-600">✓</span>}
                                                 </td>
-                                            ))}
-                                        </tr>
-                                    ))}
+                                                {analysisReport.years.map(year => (
+                                                    <td key={year} className={`px-4 py-2 text-right ${isSelected ? 'font-medium' : 'text-slate-400'}`}>
+                                                        {(row.amountsByYear[year] || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                                                    </td>
+                                                ))}
+                                            </tr>
+                                        );
+                                    })}
 
                                     {/* Selected Months Total UZS Row */}
-                                    <tr className="bg-green-50 font-bold">
+                                    <tr className="bg-green-50 font-bold border-t-2 border-green-200">
                                         <td className="px-4 py-3 text-slate-900">
                                             {isPartialYear ? 'SELECTED MONTHS (UZS)' : 'TOTAL (UZS)'}
                                         </td>
@@ -798,7 +818,7 @@ export default function AccountingPage() {
                                         ))}
                                     </tr>
 
-                                    {/* Full Year Totals (only show if partial year selected) */}
+                                    {/* Full Year Totals */}
                                     {isPartialYear && analysisReport.totals.fullYearUzsByYear && (
                                         <>
                                             <tr className="bg-sky-50 font-bold">
@@ -828,7 +848,7 @@ export default function AccountingPage() {
                         {analysisReport.yearComparisons.length > 0 && (
                             <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
                                 <div className="bg-rose-600 text-white px-4 py-3 font-medium">
-                                    Year-over-Year Comparison (% Change)
+                                    Year-over-Year Comparison (% Change) — All Months
                                 </div>
                                 <div className="overflow-x-auto">
                                     <table className="w-full text-sm">
@@ -843,18 +863,27 @@ export default function AccountingPage() {
                                         </tr>
                                         </thead>
                                         <tbody className="divide-y divide-slate-100">
-                                        {analysisReport.months.map(month => {
-                                            const monthName = MONTHS[month - 1];
+                                        {MONTHS.map((monthName, idx) => {
+                                            const month = idx + 1;
+                                            const isSelected = analysisReport.months.includes(month);
                                             return (
-                                                <tr key={month} className="hover:bg-slate-50">
-                                                    <td className="px-4 py-2 font-medium text-slate-700">{monthName}</td>
+                                                <tr
+                                                    key={month}
+                                                    className={isSelected ? 'bg-amber-50 hover:bg-amber-100' : 'hover:bg-slate-50 opacity-60'}
+                                                >
+                                                    <td className={`px-4 py-2 ${isSelected ? 'font-semibold text-slate-900' : 'text-slate-500'}`}>
+                                                        {monthName}
+                                                        {isSelected && <span className="ml-2 text-xs text-emerald-600">✓</span>}
+                                                    </td>
                                                     {analysisReport.yearComparisons.map(comp => {
                                                         const change = comp.monthlyPercentageChange[month] || 0;
                                                         return (
                                                             <td
                                                                 key={`${comp.baseYear}-${comp.compareYear}`}
                                                                 className={`px-4 py-2 text-center font-medium ${
-                                                                    change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-slate-500'
+                                                                    isSelected
+                                                                        ? change > 0 ? 'text-green-600' : change < 0 ? 'text-red-600' : 'text-slate-500'
+                                                                        : 'text-slate-400'
                                                                 }`}
                                                             >
                                                                 {change > 0 ? '+' : ''}{change.toFixed(2)}%
@@ -866,7 +895,7 @@ export default function AccountingPage() {
                                         })}
 
                                         {/* Selected Months Total Change Row */}
-                                        <tr className="bg-yellow-50 font-bold">
+                                        <tr className="bg-yellow-50 font-bold border-t-2 border-yellow-200">
                                             <td className="px-4 py-3 text-slate-900">
                                                 {isPartialYear ? 'SELECTED MONTHS CHANGE' : 'TOTAL CHANGE'}
                                             </td>
@@ -882,7 +911,7 @@ export default function AccountingPage() {
                                             ))}
                                         </tr>
 
-                                        {/* Full Year Change Row (only show if partial year selected) */}
+                                        {/* Full Year Change Row */}
                                         {isPartialYear && (
                                             <tr className="bg-cyan-50 font-bold">
                                                 <td className="px-4 py-3 text-slate-900">FULL YEAR CHANGE</td>

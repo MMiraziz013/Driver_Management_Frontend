@@ -46,6 +46,7 @@ export interface AnalysisMonthRowDto {
     month: number;
     monthName: string;
     amountsByYear: Record<number, number>;
+    isSelected: boolean;
 }
 
 export interface AnalysisTotalsDto {
