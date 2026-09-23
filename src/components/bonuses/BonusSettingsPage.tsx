@@ -11,6 +11,7 @@ import {
     BonusCalculationMethod,
     CalculationMethodLabels
 } from '@/services/bonusService';
+import { BonusExceptionsSection } from './BonusExceptionsSection';
 
 export function BonusSettingsPage() {
     const { token } = useAuth();
@@ -351,7 +352,7 @@ export function BonusSettingsPage() {
                         {/* Exception note */}
                         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
                             <p className="text-xs text-amber-700">
-                                <strong>Exception:</strong> Sierra Nevada + MB Sprinter Round Trips use hourly (duration-based) rates instead.
+                                <strong>Exceptions:</strong> Some Round Trips (e.g. Sierra Nevada via Chirchik) can be calculated differently. See Calculation Exceptions below.
                             </p>
                         </div>
 
@@ -547,6 +548,8 @@ export function BonusSettingsPage() {
                             ))}
                         </div>
                     </div>
+
+                    <BonusExceptionsSection serviceTypeConfigs={serviceTypeConfigs} />
                 </div>
             )}
         </div>

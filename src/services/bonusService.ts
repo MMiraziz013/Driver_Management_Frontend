@@ -255,3 +255,112 @@ export async function exportBonusesToExcel(request: BonusCalculationRequestDto, 
 
     return response.blob();
 }
+
+// Calculation exceptions — override how matching trips are calculated
+// (e.g. Sierra Nevada Round Trips via Chirchik => hourly)
+
+// The exceptions API sends/accepts the calculation method as its string name
+export type BonusCalculationMethodName = 'QuantityBased' | 'DurationBased' | 'RoundTripBased' | 'FieldTripBased';
+
+export const CalculationMethodNameLabels: Record<BonusCalculationMethodName, string> = {
+    QuantityBased: CalculationMethodLabels[BonusCalculationMethod.QuantityBased],
+    DurationBased: CalculationMethodLabels[BonusCalculationMethod.DurationBased],
+    RoundTripBased: CalculationMethodLabels[BonusCalculationMethod.RoundTripBased],
+    FieldTripBased: CalculationMethodLabels[BonusCalculationMethod.FieldTripBased],
+};
+
+export interface BonusCalculationExceptionDto {
+    id: number;
+    name: string;
+    isActive: boolean;
+    companyNameContains: string;
+    serviceTypeId: number;
+    serviceTypeName: string;
+    calculationMethod: BonusCalculationMethodName;
+    calculationMethodName: string;
+    vehicleTypes: string[];      // [] = all vehicle types
+    locationKeywords: string[];  // [] = any route
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface SaveBonusCalculationExceptionDto {
+    name: string;
+    isActive: boolean;
+    companyNameContains: string;
+    serviceTypeId: number;
+    calculationMethod: BonusCalculationMethodName;
+    vehicleTypes: string[];
+    locationKeywords: string[];
+}
+
+// Throws the API's error messages (errors[]) when present
+async function readErrors(response: Response, fallback: string): Promise<never> {
+    const errorData = await response.json().catch(() => null);
+    throw new Error(errorData?.errors?.join(', ') || errorData?.message || fallback);
+}
+
+export async function getBonusExceptions(token: string): Promise<BonusCalculationExceptionDto[]> {
+    const response = await fetch(`${API_BASE_URL}/bonus-settings/exceptions`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        return readErrors(response, 'Failed to fetch calculation exceptions');
+    }
+
+    const data = await response.json();
+    return data.data || [];
+}
+
+export async function createBonusException(dto: SaveBonusCalculationExceptionDto, token: string): Promise<BonusCalculationExceptionDto> {
+    const response = await fetch(`${API_BASE_URL}/bonus-settings/exceptions`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(dto),
+    });
+
+    if (!response.ok) {
+        return readErrors(response, 'Failed to create calculation exception');
+    }
+
+    const data = await response.json();
+    return data.data;
+}
+
+// Full replace — all fields must be sent
+export async function updateBonusException(id: number, dto: SaveBonusCalculationExceptionDto, token: string): Promise<BonusCalculationExceptionDto> {
+    const response = await fetch(`${API_BASE_URL}/bonus-settings/exceptions/${id}`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(dto),
+    });
+
+    if (!response.ok) {
+        return readErrors(response, 'Failed to update calculation exception');
+    }
+
+    const data = await response.json();
+    return data.data;
+}
+
+export async function deleteBonusException(id: number, token: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/bonus-settings/exceptions/${id}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        return readErrors(response, 'Failed to delete calculation exception');
+    }
+}
