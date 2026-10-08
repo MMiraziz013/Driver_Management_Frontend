@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/AuthContext';
 import {
     getReportPeriods,
     getTripsByPeriod,
+    getTripById,
     recalculateTripDistance,
     deleteTrip,
     TripDto,
@@ -106,11 +107,18 @@ export function TripsPage() {
         setRecalculatingId(tripId);
         try {
             const newDistance = await recalculateTripDistance(tripId, token);
-            setTrips(prev => prev.map(t =>
-                t.id === tripId
-                    ? { ...t, distanceKm: newDistance, coordinatesResolved: newDistance !== null }
-                    : t
-            ));
+            try {
+                // Re-fetch the trip: idle hours change together with the distance
+                const updated = await getTripById(tripId, token);
+                setTrips(prev => prev.map(t => t.id === tripId ? updated : t));
+            } catch {
+                setTrips(prev => prev.map(t =>
+                    t.id === tripId
+                        ? { ...t, distanceKm: newDistance, coordinatesResolved: newDistance !== null }
+                        : t
+                ));
+                handleRefresh();
+            }
         } catch (err) {
             alert('Failed to recalculate distance: ' + (err as Error).message);
         } finally {
@@ -249,19 +257,20 @@ export function TripsPage() {
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Driver</th>
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Vehicle</th>
                             <th className="text-right px-4 py-3 font-semibold text-slate-700">Distance</th>
+                            <th className="text-right px-4 py-3 font-semibold text-slate-700">Idle</th>
                             <th className="text-center px-4 py-3 font-semibold text-slate-700">Actions</th>
                         </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                         {tripsLoading ? (
                             <tr>
-                                <td colSpan={9} className="px-4 py-12 text-center">
+                                <td colSpan={10} className="px-4 py-12 text-center">
                                     <Loader2 className="w-6 h-6 animate-spin text-indigo-600 mx-auto" />
                                 </td>
                             </tr>
                         ) : filteredTrips.length === 0 ? (
                             <tr>
-                                <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
+                                <td colSpan={10} className="px-4 py-12 text-center text-slate-500">
                                     No trips found
                                 </td>
                             </tr>
@@ -296,6 +305,20 @@ export function TripsPage() {
                                                 </span>
                                         ) : (
                                             <span className="text-red-500">—</span>
+                                        )}
+                                    </td>
+                                    <td className="px-4 py-3 text-right text-slate-600">
+                                        {trip.drivingDurationHours != null ? (
+                                            <span title={`Routed driving time: ${Number(trip.drivingDurationHours.toFixed(2))} h`}>
+                                                {Number(trip.idleHours.toFixed(2))} h
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className="text-slate-400"
+                                                title="No routed driving time (distance was estimated or edited by hand)"
+                                            >
+                                                —
+                                            </span>
                                         )}
                                     </td>
                                     <td className="px-4 py-3">

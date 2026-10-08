@@ -15,7 +15,8 @@ import {
     Route,
     DollarSign,
     FileSpreadsheet,
-    Building2
+    Building2,
+    Fuel
 } from 'lucide-react';
 // Import structural components and hooks from SidebarBase.tsx
 import {
@@ -33,7 +34,7 @@ import { useIsMobile } from './ui/use-mobile';
 
 // --- YOUR ORIGINAL COMPONENT INTERFACE ---
 export type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports'
-    | 'settings' | 'service-types' | 'vacations' | 'trips' | 'bonuses' | 'bonus-settings' | 'accounting' | 'companies';
+    | 'settings' | 'service-types' | 'vacations' | 'trips' | 'bonuses' | 'bonus-settings' | 'fuel-settings' | 'accounting' | 'companies';
 interface SidebarProps {
     currentPage: Page;
     onPageChange: (page: Page) => void;
@@ -51,6 +52,7 @@ function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
         { id: 'vacations' as Page, label: 'Vacations', icon: Calendar },
         { id: 'bonuses' as Page, label: 'Bonuses', icon: DollarSign },
         { id: 'bonus-settings' as Page, label: 'Bonus Settings', icon: Settings },
+        { id: 'fuel-settings' as Page, label: 'Fuel Settings', icon: Fuel },
         {id: 'accounting' as Page, label: 'Accounting', icon: FileSpreadsheet},
         { id: 'companies' as Page, label: 'Companies', icon: Building2 },
 
