@@ -622,21 +622,20 @@ export function ReportsPage() {
                                             </button>
 
                                             {/* Resolve Conflicts */}
-                                            {(period.status === 'HasConflicts' || (period.conflictCount ?? 0) > 0) && (
-                                                <button
-                                                    onClick={() => handleResolveConflicts(period.id, period)}
-                                                    disabled={processingId === period.id || finalized}
-                                                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                    title={finalized ? "Period is finalized" : "Retry conflicting trips on fallback vehicle types"}
-                                                >
-                                                    {processingId === period.id && processingAction === "resolve" ? (
-                                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                                    ) : (
-                                                        <Wrench className="w-4 h-4" />
-                                                    )}
-                                                    Resolve
-                                                </button>
-                                            )}
+                                            {/* Shown for every period: the periods list doesn't report conflict status */}
+                                            <button
+                                                onClick={() => handleResolveConflicts(period.id, period)}
+                                                disabled={processingId === period.id || finalized}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title={finalized ? "Period is finalized" : "Retry conflicting trips on fallback vehicle types"}
+                                            >
+                                                {processingId === period.id && processingAction === "resolve" ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Wrench className="w-4 h-4" />
+                                                )}
+                                                Resolve
+                                            </button>
 
                                             {/* Run Fuel Allocation */}
                                             <button
