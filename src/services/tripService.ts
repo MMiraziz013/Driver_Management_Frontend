@@ -4,6 +4,8 @@ export interface TripDto {
     id: number;
     confNumber: string;
     pickUpDate: string;
+    // Date before Reschedule Conflicts moved the trip; null if it was never moved
+    originalPickUpDate?: string | null;
     garageOutTime: string;
     garageInTime: string;
     companyName: string;

@@ -16,7 +16,8 @@ import {
     Map,
     ClipboardList,
     Trash2,  // Add this
-    Wrench
+    Wrench,
+    CalendarClock
 } from "lucide-react";
 import { CreateReportPeriodModal } from "./CreateReportPeriodModal";
 import { UploadTripsModal } from "./UploadTripsModal";
@@ -64,6 +65,8 @@ interface ResolveConflictsItem {
     tripId: number;
     confNumber?: string | null;
     pickUpDate: string;
+    // Set only for trips moved by Reschedule Conflicts
+    newPickUpDate?: string | null;
     originalVehicleType: string;
     newVehicleType?: string | null;
     driverName?: string | null;
@@ -79,6 +82,10 @@ interface ResolveConflictsResult {
     skipped: number;
     items: ResolveConflictsItem[];
 }
+
+// "2026-10-03T00:00:00Z" -> "03.10"
+const formatDayMonth = (date: string) =>
+    new Date(date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
 
 export function ReportsPage() {
     const authFetch = useAuthFetch();
@@ -104,8 +111,8 @@ export function ReportsPage() {
     const [journeys, setJourneys] = useState<JourneyDto[]>([]);
     const [journeysLoading, setJourneysLoading] = useState(false);
 
-    // Resolve conflicts result
-    const [resolveResult, setResolveResult] = useState<{ message: string; data: ResolveConflictsResult } | null>(null);
+    // Resolve / reschedule conflicts result
+    const [resolveResult, setResolveResult] = useState<{ title: string; message: string; data: ResolveConflictsResult } | null>(null);
 
     // Dropdown menus
     const [openUploadMenuId, setOpenUploadMenuId] = useState<number | null>(null);
@@ -185,26 +192,28 @@ export function ReportsPage() {
         }
     };
 
-    // Retry conflicting trips on their fallback vehicle types
-    const handleResolveConflicts = async (periodId: number, period: ReportPeriod) => {
+    // Resolve: retry conflicting trips on their fallback vehicle types.
+    // Reschedule: move remaining conflicting trips to the closest free day within ±3 days.
+    const handleConflictAction = async (periodId: number, period: ReportPeriod, action: "resolve" | "reschedule") => {
         if (isPeriodFinalized(period)) {
             alert("⚠️ This period is already finalized. Revert finalization first.");
             return;
         }
 
+        const title = action === "resolve" ? "Resolve Conflicts" : "Reschedule Conflicts";
         setProcessingId(periodId);
-        setProcessingAction("resolve");
+        setProcessingAction(action);
         try {
-            const response = await authFetch(`${API_BASE_URL}/reports/resolve-conflicts/${periodId}`, {
+            const response = await authFetch(`${API_BASE_URL}/reports/${action}-conflicts/${periodId}`, {
                 method: 'POST'
             });
             const result = await response.json();
 
             if (response.ok && result.data) {
-                setResolveResult({ message: result.message, data: result.data });
+                setResolveResult({ title, message: result.message, data: result.data });
                 fetchPeriods();
             } else {
-                alert("❌ Error: " + (result.errors?.join(', ') || result.message || "Resolve conflicts failed"));
+                alert("❌ Error: " + (result.errors?.join(', ') || result.message || `${title} failed`));
             }
         } catch (error) {
             alert("❌ Failed to connect to the assignment engine.");
@@ -624,7 +633,7 @@ export function ReportsPage() {
                                             {/* Resolve Conflicts */}
                                             {/* Shown for every period: the periods list doesn't report conflict status */}
                                             <button
-                                                onClick={() => handleResolveConflicts(period.id, period)}
+                                                onClick={() => handleConflictAction(period.id, period, "resolve")}
                                                 disabled={processingId === period.id || finalized}
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                                 title={finalized ? "Period is finalized" : "Retry conflicting trips on fallback vehicle types"}
@@ -635,6 +644,21 @@ export function ReportsPage() {
                                                     <Wrench className="w-4 h-4" />
                                                 )}
                                                 Resolve
+                                            </button>
+
+                                            {/* Reschedule Conflicts */}
+                                            <button
+                                                onClick={() => handleConflictAction(period.id, period, "reschedule")}
+                                                disabled={processingId === period.id || finalized}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title={finalized ? "Period is finalized" : "Move conflicting trips to the closest free day within ±3 days"}
+                                            >
+                                                {processingId === period.id && processingAction === "reschedule" ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <CalendarClock className="w-4 h-4" />
+                                                )}
+                                                Reschedule
                                             </button>
 
                                             {/* Run Fuel Allocation */}
@@ -971,7 +995,7 @@ export function ReportsPage() {
                     </div>
                 </div>
             )}
-            {/* Resolve Conflicts Result Modal */}
+            {/* Resolve / Reschedule Conflicts Result Modal */}
             {resolveResult && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                     <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -979,8 +1003,12 @@ export function ReportsPage() {
                         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                             <div>
                                 <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                                    <Wrench className="w-5 h-5 text-red-500" />
-                                    Resolve Conflicts
+                                    {resolveResult.title === "Reschedule Conflicts" ? (
+                                        <CalendarClock className="w-5 h-5 text-orange-500" />
+                                    ) : (
+                                        <Wrench className="w-5 h-5 text-red-500" />
+                                    )}
+                                    {resolveResult.title}
                                 </h2>
                                 <p className="text-sm text-gray-500 mt-1">{resolveResult.message}</p>
                             </div>
@@ -1023,7 +1051,7 @@ export function ReportsPage() {
                             {resolveResult.data.items.length === 0 ? (
                                 <div className="text-center py-12 text-gray-500">
                                     <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                                    <p>No conflicts to resolve.</p>
+                                    <p>No conflicts found.</p>
                                 </div>
                             ) : (
                                 <div className="overflow-x-auto border border-gray-200 rounded-lg">
@@ -1044,7 +1072,12 @@ export function ReportsPage() {
                                             <tr key={item.tripId} className="hover:bg-gray-50">
                                                 <td className="px-4 py-3 font-medium">{item.confNumber || `#${item.tripId}`}</td>
                                                 <td className="px-4 py-3">
-                                                    {item.pickUpDate ? new Date(item.pickUpDate).toLocaleDateString('ru-RU') : '-'}
+                                                    {item.pickUpDate && item.newPickUpDate ? (
+                                                        <>
+                                                            {formatDayMonth(item.pickUpDate)}
+                                                            <span className="text-emerald-700"> → {formatDayMonth(item.newPickUpDate)}</span>
+                                                        </>
+                                                    ) : item.pickUpDate ? new Date(item.pickUpDate).toLocaleDateString('ru-RU') : '-'}
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     {item.originalVehicleType}

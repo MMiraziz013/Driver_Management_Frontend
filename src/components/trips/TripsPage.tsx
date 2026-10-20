@@ -280,6 +280,14 @@ export function TripsPage() {
                                     <td className="px-4 py-3 font-mono text-xs">{trip.confNumber}</td>
                                     <td className="px-4 py-3">
                                         {new Date(trip.pickUpDate).toLocaleDateString()}
+                                        {trip.originalPickUpDate && (
+                                            <div
+                                                className="mt-0.5 text-[11px] text-amber-600"
+                                                title="Rescheduled by Reschedule Conflicts"
+                                            >
+                                                moved from {new Date(trip.originalPickUpDate).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' })}
+                                            </div>
+                                        )}
                                     </td>
                                     <td className="px-4 py-3 text-slate-600">
                                         {trip.garageOutTime.substring(0, 5)} - {trip.garageInTime.substring(0, 5)}
