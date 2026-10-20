@@ -4,11 +4,16 @@ export interface TripDto {
     id: number;
     confNumber: string;
     pickUpDate: string;
+    // Date before Reschedule Conflicts moved the trip; null if it was never moved
+    originalPickUpDate?: string | null;
     garageOutTime: string;
     garageInTime: string;
     companyName: string;
     routingDetails: string;
     distanceKm: number | null;
+    // Routed driving time in hours; null when the distance is estimated or manually edited
+    drivingDurationHours: number | null;
+    idleHours: number;
     coordinatesResolved: boolean;
     includedInReport: boolean;
     importedDriverName: string | null;
@@ -73,6 +78,21 @@ export async function getTripsByPeriod(periodId: number, token: string): Promise
 
     const data = await response.json();
     return data.data || [];
+}
+
+export async function getTripById(tripId: number, token: string): Promise<TripDto> {
+    const response = await fetch(`${API_BASE_URL}/trips/${tripId}`, {
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch trip');
+    }
+
+    const data = await response.json();
+    return data.data;
 }
 
 export async function updateTrip(dto: UpdateTripDto, token: string): Promise<void> {

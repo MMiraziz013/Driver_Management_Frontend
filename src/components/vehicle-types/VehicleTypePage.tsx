@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Pencil, Check, X } from 'lucide-react';
+import { Plus, Pencil, Check, X, Layers } from 'lucide-react';
 
 import { getAllVehicleTypes, updateVehicleType } from '@/services/vehicleTypeService';
 import { AddVehicleTypeModal } from './AddVehicleTypeModal';
+import { VehicleTypeFallbacksModal } from './VehicleTypeFallbacksModal';
 import { useAuth } from "@/auth/AuthContext";
 
 interface VehicleType {
@@ -28,11 +29,14 @@ export function VehicleTypesPage() {
     const [editDescription, setEditDescription] = useState('');
     const [saving, setSaving] = useState(false);
 
+    // Fallbacks modal
+    const [fallbacksType, setFallbacksType] = useState<VehicleType | null>(null);
+
     const fetchVehicleTypeData = async () => {
         setLoading(true);
         setError(null);
         try {
-            const fetchedTypes = await getAllVehicleTypes(token!);
+            const fetchedTypes = await getAllVehicleTypes(token!, 1, 1000);
             setVehicleTypes(fetchedTypes);
         } catch (err) {
             console.error("Error fetching vehicle types:", err);
@@ -181,13 +185,22 @@ export function VehicleTypesPage() {
                                                 </button>
                                             </>
                                         ) : (
-                                            <button
-                                                onClick={() => handleStartEdit(type)}
-                                                className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                                                title="Edit"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
+                                            <>
+                                                <button
+                                                    onClick={() => handleStartEdit(type)}
+                                                    className="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => setFallbacksType(type)}
+                                                    className="p-1.5 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                                                    title="Fallback vehicle types"
+                                                >
+                                                    <Layers className="w-4 h-4" />
+                                                </button>
+                                            </>
                                         )}
                                     </div>
                                 </td>
@@ -208,6 +221,15 @@ export function VehicleTypesPage() {
                 onClose={() => {
                     handleCloseModal();
                     fetchVehicleTypeData(); // Refresh after adding
+                }}
+            />
+
+            <VehicleTypeFallbacksModal
+                vehicleType={fallbacksType}
+                onClose={() => setFallbacksType(null)}
+                onSaved={() => {
+                    setSuccess('Fallback vehicle types saved');
+                    setTimeout(() => setSuccess(null), 3000);
                 }}
             />
         </div>

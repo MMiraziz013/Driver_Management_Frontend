@@ -21,6 +21,7 @@ interface Vehicle {
     isActive: boolean;
     fuelTankCapacity: number | null;
     fuelConsumptionPer100Km: number | null;
+    idleFuelConsumptionPerHour?: number | null;
     fuelType: string | null;
     initialFuelLevel: number | null;
     currentMileage: number | null;
@@ -366,6 +367,12 @@ export function CarsPage() {
                                                                 <span className="text-slate-500">Per 100km:</span>
                                                                 <span className="font-medium text-slate-800">
                                                                     {car.fuelConsumptionPer100Km ? `${car.fuelConsumptionPer100Km} L` : 'N/A'}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-slate-500">Idle:</span>
+                                                                <span className="font-medium text-slate-800">
+                                                                    {car.idleFuelConsumptionPerHour ? `${car.idleFuelConsumptionPerHour} L/h` : 'N/A'}
                                                                 </span>
                                                             </div>
                                                             {car.fuelTankCapacity && car.fuelConsumptionPer100Km && (

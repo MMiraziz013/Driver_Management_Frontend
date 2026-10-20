@@ -12,6 +12,7 @@ import { NoPermissionBanner } from '@/auth/PermissionComponents';
 import { Loader2 } from 'lucide-react';
 import { BonusesPage } from '@/components/bonuses/BonusesPage';
 import { BonusSettingsPage } from '@/components/bonuses/BonusSettingsPage';
+import { FuelSettingsPage } from '@/components/fuel/FuelSettingsPage';
 import CompaniesPage from '@/components/companies/CompaniesPage';
 
 // Sidebar components - import Page type from Sidebar to avoid duplicate type definitions
@@ -85,6 +86,8 @@ function AuthenticatedApp() {
                 return <BonusesPage />;
             case 'bonus-settings':
                 return <BonusSettingsPage />;
+            case 'fuel-settings':
+                return <FuelSettingsPage />;
             case 'accounting':
                 return <AccountingPage />;
             case 'companies':

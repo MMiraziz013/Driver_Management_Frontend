@@ -15,7 +15,9 @@ import {
     CheckCircle,
     Map,
     ClipboardList,
-    Trash2  // Add this
+    Trash2,  // Add this
+    Wrench,
+    CalendarClock
 } from "lucide-react";
 import { CreateReportPeriodModal } from "./CreateReportPeriodModal";
 import { UploadTripsModal } from "./UploadTripsModal";
@@ -59,6 +61,32 @@ interface JourneyDto {
     confNumbers: string[];
 }
 
+interface ResolveConflictsItem {
+    tripId: number;
+    confNumber?: string | null;
+    pickUpDate: string;
+    // Set only for trips moved by Reschedule Conflicts
+    newPickUpDate?: string | null;
+    originalVehicleType: string;
+    newVehicleType?: string | null;
+    driverName?: string | null;
+    vehiclePlate?: string | null;
+    status: 'Resolved' | 'Unresolved' | 'Skipped';
+    reason?: string | null;
+}
+
+interface ResolveConflictsResult {
+    totalConflicts: number;
+    resolved: number;
+    remaining: number;
+    skipped: number;
+    items: ResolveConflictsItem[];
+}
+
+// "2026-10-03T00:00:00Z" -> "03.10"
+const formatDayMonth = (date: string) =>
+    new Date(date).toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+
 export function ReportsPage() {
     const authFetch = useAuthFetch();
 
@@ -82,6 +110,9 @@ export function ReportsPage() {
     // Journeys data
     const [journeys, setJourneys] = useState<JourneyDto[]>([]);
     const [journeysLoading, setJourneysLoading] = useState(false);
+
+    // Resolve / reschedule conflicts result
+    const [resolveResult, setResolveResult] = useState<{ title: string; message: string; data: ResolveConflictsResult } | null>(null);
 
     // Dropdown menus
     const [openUploadMenuId, setOpenUploadMenuId] = useState<number | null>(null);
@@ -152,6 +183,37 @@ export function ReportsPage() {
                 fetchPeriods();
             } else {
                 alert("❌ Error: " + (result.message || "Assignment failed"));
+            }
+        } catch (error) {
+            alert("❌ Failed to connect to the assignment engine.");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction("");
+        }
+    };
+
+    // Resolve: retry conflicting trips on their fallback vehicle types.
+    // Reschedule: move remaining conflicting trips to the closest free day within ±3 days.
+    const handleConflictAction = async (periodId: number, period: ReportPeriod, action: "resolve" | "reschedule") => {
+        if (isPeriodFinalized(period)) {
+            alert("⚠️ This period is already finalized. Revert finalization first.");
+            return;
+        }
+
+        const title = action === "resolve" ? "Resolve Conflicts" : "Reschedule Conflicts";
+        setProcessingId(periodId);
+        setProcessingAction(action);
+        try {
+            const response = await authFetch(`${API_BASE_URL}/reports/${action}-conflicts/${periodId}`, {
+                method: 'POST'
+            });
+            const result = await response.json();
+
+            if (response.ok && result.data) {
+                setResolveResult({ title, message: result.message, data: result.data });
+                fetchPeriods();
+            } else {
+                alert("❌ Error: " + (result.errors?.join(', ') || result.message || `${title} failed`));
             }
         } catch (error) {
             alert("❌ Failed to connect to the assignment engine.");
@@ -568,6 +630,37 @@ export function ReportsPage() {
                                                 Assign
                                             </button>
 
+                                            {/* Resolve Conflicts */}
+                                            {/* Shown for every period: the periods list doesn't report conflict status */}
+                                            <button
+                                                onClick={() => handleConflictAction(period.id, period, "resolve")}
+                                                disabled={processingId === period.id || finalized}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title={finalized ? "Period is finalized" : "Retry conflicting trips on fallback vehicle types"}
+                                            >
+                                                {processingId === period.id && processingAction === "resolve" ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Wrench className="w-4 h-4" />
+                                                )}
+                                                Resolve
+                                            </button>
+
+                                            {/* Reschedule Conflicts */}
+                                            <button
+                                                onClick={() => handleConflictAction(period.id, period, "reschedule")}
+                                                disabled={processingId === period.id || finalized}
+                                                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                title={finalized ? "Period is finalized" : "Move conflicting trips to the closest free day within ±3 days"}
+                                            >
+                                                {processingId === period.id && processingAction === "reschedule" ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <CalendarClock className="w-4 h-4" />
+                                                )}
+                                                Reschedule
+                                            </button>
+
                                             {/* Run Fuel Allocation */}
                                             <button
                                                 onClick={() => handleRunFuelAllocation(period.id, period)}
@@ -894,6 +987,130 @@ export function ReportsPage() {
                                     setSelectedPeriod(null);
                                     setJourneys([]);
                                 }}
+                                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Resolve / Reschedule Conflicts Result Modal */}
+            {resolveResult && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                        {/* Header */}
+                        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                                    {resolveResult.title === "Reschedule Conflicts" ? (
+                                        <CalendarClock className="w-5 h-5 text-orange-500" />
+                                    ) : (
+                                        <Wrench className="w-5 h-5 text-red-500" />
+                                    )}
+                                    {resolveResult.title}
+                                </h2>
+                                <p className="text-sm text-gray-500 mt-1">{resolveResult.message}</p>
+                            </div>
+                            <button
+                                onClick={() => setResolveResult(null)}
+                                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+                            >
+                                ×
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-auto p-6 space-y-4">
+                            {/* Summary */}
+                            <div className="grid grid-cols-4 gap-4">
+                                <div className="bg-blue-50 rounded-lg p-4">
+                                    <div className="text-2xl font-bold text-blue-700">{resolveResult.data.totalConflicts}</div>
+                                    <div className="text-sm text-blue-600">Total Conflicts</div>
+                                </div>
+                                <div className="bg-emerald-50 rounded-lg p-4">
+                                    <div className="text-2xl font-bold text-emerald-700">{resolveResult.data.resolved}</div>
+                                    <div className="text-sm text-emerald-600">Resolved</div>
+                                </div>
+                                <div className="bg-red-50 rounded-lg p-4">
+                                    <div className="text-2xl font-bold text-red-700">{resolveResult.data.remaining}</div>
+                                    <div className="text-sm text-red-600">Remaining</div>
+                                </div>
+                                <div className="bg-gray-100 rounded-lg p-4">
+                                    <div className="text-2xl font-bold text-gray-700">{resolveResult.data.skipped}</div>
+                                    <div className="text-sm text-gray-600">Skipped</div>
+                                </div>
+                            </div>
+
+                            {resolveResult.data.items.some(i => i.reason?.startsWith('No fallback vehicle types configured')) && (
+                                <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                                    Some vehicle types have no fallbacks. Configure them under <strong>Vehicle Types</strong> using the fallbacks button on each row.
+                                </div>
+                            )}
+
+                            {resolveResult.data.items.length === 0 ? (
+                                <div className="text-center py-12 text-gray-500">
+                                    <CheckCircle2 className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                                    <p>No conflicts found.</p>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                                    <table className="w-full text-sm">
+                                        <thead className="bg-gray-50">
+                                        <tr>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-600">Conf #</th>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-600">Date</th>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-600">Vehicle Type</th>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-600">Driver</th>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-600">Vehicle</th>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-600">Status</th>
+                                            <th className="px-4 py-3 text-left font-medium text-gray-600">Reason</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                        {resolveResult.data.items.map((item) => (
+                                            <tr key={item.tripId} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 font-medium">{item.confNumber || `#${item.tripId}`}</td>
+                                                <td className="px-4 py-3">
+                                                    {item.pickUpDate && item.newPickUpDate ? (
+                                                        <>
+                                                            {formatDayMonth(item.pickUpDate)}
+                                                            <span className="text-emerald-700"> → {formatDayMonth(item.newPickUpDate)}</span>
+                                                        </>
+                                                    ) : item.pickUpDate ? new Date(item.pickUpDate).toLocaleDateString('ru-RU') : '-'}
+                                                </td>
+                                                <td className="px-4 py-3">
+                                                    {item.originalVehicleType}
+                                                    {item.newVehicleType && (
+                                                        <span className="text-emerald-700"> → {item.newVehicleType}</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-4 py-3">{item.driverName || '-'}</td>
+                                                <td className="px-4 py-3">{item.vehiclePlate || '-'}</td>
+                                                <td className="px-4 py-3">
+                                                    <span className={`inline-flex items-center py-0.5 px-2 rounded-full text-xs font-medium border ${
+                                                        item.status === 'Resolved'
+                                                            ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                            : item.status === 'Unresolved'
+                                                                ? 'bg-red-50 border-red-200 text-red-700'
+                                                                : 'bg-gray-50 border-gray-200 text-gray-600'
+                                                    }`}>
+                                                        {item.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-4 py-3 text-gray-500 max-w-xs">{item.reason || '-'}</td>
+                                            </tr>
+                                        ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-gray-200 flex justify-end bg-gray-50">
+                            <button
+                                onClick={() => setResolveResult(null)}
                                 className="px-4 py-2 text-gray-600 hover:text-gray-800"
                             >
                                 Close

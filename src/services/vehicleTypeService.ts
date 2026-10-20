@@ -119,3 +119,41 @@ export const updateVehicleType = async (
     );
     return response.data;
 };
+
+// Fallback vehicle types (ordered; priority 1 is tried first)
+export interface VehicleTypeFallbackDto {
+    vehicleTypeId: number;
+    name: string;
+    priority: number;
+}
+
+export const getVehicleTypeFallbacks = async (
+    token: string,
+    id: number
+): Promise<VehicleTypeFallbackDto[]> => {
+    const response = await axios.get(
+        `${API_BASE_URL}/vehicle-types/${id}/fallbacks`,
+        {
+            headers: { Authorization: `Bearer ${token}` },
+        }
+    );
+    return response.data?.data || [];
+};
+
+export const updateVehicleTypeFallbacks = async (
+    token: string,
+    id: number,
+    fallbackVehicleTypeIds: number[]
+): Promise<VehicleTypeFallbackDto[]> => {
+    const response = await axios.put(
+        `${API_BASE_URL}/vehicle-types/${id}/fallbacks`,
+        { fallbackVehicleTypeIds },
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        }
+    );
+    return response.data?.data || [];
+};

@@ -40,6 +40,7 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
     // Fuel & mileage info
     const [fuelTankCapacity, setFuelTankCapacity] = useState<string>('');
     const [fuelConsumptionPer100Km, setFuelConsumptionPer100Km] = useState<string>('');
+    const [idleFuelConsumptionPerHour, setIdleFuelConsumptionPerHour] = useState<string>('');
     const [fuelType, setFuelType] = useState<string>('АИ-95');
     const [initialFuelLevel, setInitialFuelLevel] = useState<string>('');
     const [currentMileage, setCurrentMileage] = useState<string>('');
@@ -67,6 +68,7 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
         setCategory(1);
         setFuelTankCapacity('');
         setFuelConsumptionPer100Km('');
+        setIdleFuelConsumptionPerHour('');
         setFuelType('АИ-95');
         setInitialFuelLevel('');
         setCurrentMileage('');
@@ -87,6 +89,7 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
             requiredDriverCategory: category,
             fuelTankCapacity: fuelTankCapacity ? parseFloat(fuelTankCapacity) : null,
             fuelConsumptionPer100Km: fuelConsumptionPer100Km ? parseFloat(fuelConsumptionPer100Km) : null,
+            idleFuelConsumptionPerHour: idleFuelConsumptionPerHour ? parseFloat(idleFuelConsumptionPerHour) : 0,
             fuelType: fuelType || null,
             initialFuelLevel: initialFuelLevel ? parseFloat(initialFuelLevel) : null,
             currentMileage: currentMileage ? parseFloat(currentMileage) : null,
@@ -258,6 +261,24 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
                                 />
                             </div>
                             <div>
+                                <label className="block text-sm font-bold text-black mb-1">Idle Consumption (L/h)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={idleFuelConsumptionPerHour}
+                                    onChange={(e) => setIdleFuelConsumptionPerHour(e.target.value)}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg text-black focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="e.g. 1.2"
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-slate-500 -mt-2">
+                            Fuel burned per hour while the engine idles: about 0.8–1.5 L/h for a sedan, 2–3 L/h for a minibus. Leave empty for no idle fuel.
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
                                 <label className="block text-sm font-bold text-black mb-1">Initial Fuel (L)</label>
                                 <input
                                     type="number"
@@ -269,19 +290,18 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
                                     placeholder="e.g. 45"
                                 />
                             </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-bold text-black mb-1">Current Mileage (km)</label>
-                            <input
-                                type="number"
-                                step="0.1"
-                                min="0"
-                                value={currentMileage}
-                                onChange={(e) => setCurrentMileage(e.target.value)}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-black focus:ring-2 focus:ring-indigo-500 outline-none"
-                                placeholder="e.g. 15000"
-                            />
+                            <div>
+                                <label className="block text-sm font-bold text-black mb-1">Current Mileage (km)</label>
+                                <input
+                                    type="number"
+                                    step="0.1"
+                                    min="0"
+                                    value={currentMileage}
+                                    onChange={(e) => setCurrentMileage(e.target.value)}
+                                    className="w-full px-4 py-2 border border-slate-300 rounded-lg text-black focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    placeholder="e.g. 15000"
+                                />
+                            </div>
                         </div>
                     </div>
 
