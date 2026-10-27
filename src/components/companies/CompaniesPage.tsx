@@ -27,6 +27,7 @@ import {
     bulkAssignCategory,
     syncCompaniesFromTransactions,
 } from '@/services/companyService';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 const CATEGORY_COLORS = [
     '#3B82F6', // Blue
@@ -42,6 +43,7 @@ const CATEGORY_COLORS = [
 ];
 
 export default function CompaniesPage() {
+    const confirm = useConfirm();
     const [categories, setCategories] = useState<CompanyCategoryDto[]>([]);
     const [companies, setCompanies] = useState<CompanyDto[]>([]);
     const [loading, setLoading] = useState(true);
@@ -134,7 +136,7 @@ export default function CompaniesPage() {
     };
 
     const handleDeleteCategory = async (id: number) => {
-        if (!confirm('Delete this category? Companies will become uncategorized.')) return;
+        if (!(await confirm({ title: 'Delete this category?', description: 'Companies in it will become uncategorized.', destructive: true }))) return;
         try {
             await deleteCompanyCategory(id);
             setSuccess('Category deleted');

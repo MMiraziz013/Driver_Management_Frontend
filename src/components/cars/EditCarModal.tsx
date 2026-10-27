@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface Vehicle {
     id: number;
@@ -174,11 +176,11 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
             } else {
                 const errorText = await response.text();
                 console.error('Update failed:', errorText);
-                alert('Failed to update vehicle. Please try again.');
+                toast.error('Failed to update vehicle. Please try again.');
             }
         } catch (error) {
             console.error('Error updating vehicle:', error);
-            alert('Error updating vehicle. Please check your connection.');
+            toast.error('Error updating vehicle. Please check your connection.');
         } finally {
             setIsSubmitting(false);
         }
@@ -192,8 +194,7 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col">
+        <ModalShell onClose={onClose} title="Edit vehicle" className="max-w-lg max-h-[90vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white rounded-t-lg">
                     <h2 className="text-xl font-bold text-slate-900">Edit Vehicle</h2>
                     <button
@@ -455,7 +456,6 @@ export function EditCarModal({ isOpen, vehicle, onClose, onSuccess }: EditCarMod
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

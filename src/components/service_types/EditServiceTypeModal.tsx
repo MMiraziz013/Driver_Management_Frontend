@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface ServiceType {
     id: number;
@@ -55,19 +57,18 @@ export function EditServiceTypeModal({ isOpen, serviceType, onClose, onSuccess }
                 onClose();
             } else {
                 const errData = await response.json();
-                alert(`Error: ${errData.message || 'Failed to update service type'}`);
+                toast.error(`${errData.message || 'Failed to update service type'}`);
             }
         } catch (error) {
             console.error('Error updating service type:', error);
-            alert('Connection error. Please check your connection.');
+            toast.error('Connection error. Please check your connection.');
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <ModalShell onClose={onClose} title="Edit service type" className="max-w-md overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                     <h2 className="text-xl font-bold text-slate-900">Edit Service Type</h2>
                     <button
@@ -131,7 +132,6 @@ export function EditServiceTypeModal({ isOpen, serviceType, onClose, onSuccess }
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

@@ -6,6 +6,8 @@ import { AddDriverModal } from './AddDriverModal';
 import { EditDriverModal } from './EditDriverModal';
 import { useAuthFetch, useAuth } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { useConfirm } from '@/components/ConfirmDialog';
+import { toast } from 'sonner';
 
 interface DriverFront {
     id: string;
@@ -18,6 +20,7 @@ interface DriverFront {
 }
 
 export function DriversPage() {
+    const confirm = useConfirm();
     const authFetch = useAuthFetch();
     const { token } = useAuth();
 
@@ -60,7 +63,7 @@ export function DriversPage() {
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm("Are you sure you want to delete this driver?")) return;
+        if (!(await confirm({ title: 'Delete this driver?', description: 'This cannot be undone.', destructive: true }))) return;
 
         try {
             const response = await authFetch(`${API_BASE_URL}/drivers/${id}`, {
@@ -70,11 +73,11 @@ export function DriversPage() {
             if (response.ok) {
                 await fetchDriverData();
             } else {
-                alert("Failed to delete driver. Please try again.");
+                toast.error("Failed to delete driver. Please try again.");
             }
         } catch (error) {
             console.error("Delete error:", error);
-            alert("Error deleting driver. Please check your connection.");
+            toast.error("Error deleting driver. Please check your connection.");
         }
     };
 
@@ -97,11 +100,11 @@ export function DriversPage() {
                 );
             } else {
                 const result = await response.json();
-                alert(`Failed to ${currentStatus ? 'deactivate' : 'activate'} driver: ${result.message || 'Unknown error'}`);
+                toast.error(`Failed to ${currentStatus ? 'deactivate' : 'activate'} driver: ${result.message || 'Unknown error'}`);
             }
         } catch (error) {
             console.error("Toggle status error:", error);
-            alert("Error updating driver status. Please check your connection.");
+            toast.error("Error updating driver status. Please check your connection.");
         }
     };
 

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useAuth } from './AuthContext';
 import { Lock } from 'lucide-react';
+import { toast } from 'sonner';
 
 // ============================================================================
 // Permission Constants (mirror of backend)
@@ -134,7 +135,7 @@ export function PermissionButton({
             if (onUnauthorized) {
                 onUnauthorized();
             } else {
-                alert('You do not have permission to perform this action.');
+                toast.warning('You do not have permission to perform this action.');
             }
             return;
         }

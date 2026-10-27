@@ -8,6 +8,8 @@ import { EditCarModal } from "@/components/cars/EditCarModal";
 import { VehicleUnavailablePeriodsModal } from './VehicleUnavailablePeriodsModal';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { useConfirm } from '@/components/ConfirmDialog';
+import { toast } from 'sonner';
 
 // Matching your C# GetVehicleDto
 interface Vehicle {
@@ -66,6 +68,7 @@ const getCategoryStyles = (category: string | number) => {
 };
 
 export function CarsPage() {
+    const confirm = useConfirm();
     const authFetch = useAuthFetch();
 
     const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -130,10 +133,10 @@ export function CarsPage() {
                     )
                 );
             } else {
-                alert("Failed to change vehicle status.");
+                toast.error("Failed to change vehicle status.");
             }
         } catch (err) {
-            alert("Connection error.");
+            toast.error("Connection error.");
         } finally {
             // Remove from toggling set
             setTogglingStatus(prev => {
@@ -155,7 +158,7 @@ export function CarsPage() {
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this vehicle?")) return;
+        if (!(await confirm({ title: 'Delete this vehicle?', description: 'This cannot be undone.', destructive: true }))) return;
 
         try {
             const response = await authFetch(`${API_BASE_URL}/vehicles/${id}`, {
@@ -165,10 +168,10 @@ export function CarsPage() {
             if (response.ok) {
                 setVehicles(prev => prev.filter(v => v.id !== id));
             } else {
-                alert("Failed to delete vehicle.");
+                toast.error("Failed to delete vehicle.");
             }
         } catch (err) {
-            alert("Connection error.");
+            toast.error("Connection error.");
         }
     };
 

@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertCircle, CheckCircle, AlertTriangle, Lock, Unlock, Fuel, ArrowRight, Users, Car } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
 import { API_BASE_URL } from '@/config/api';
+import { useConfirm } from '@/components/ConfirmDialog';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface VehicleFuelUpdate {
     vehicleId: number;
@@ -75,6 +78,7 @@ export function FinalizePeriodModal({
                                         isAlreadyFinalized
                                     }: FinalizePeriodModalProps) {
     const authFetch = useAuthFetch();
+    const confirm = useConfirm();
     
     const [isLoading, setIsLoading] = useState(false);
     const [isFinalizing, setIsFinalizing] = useState(false);
@@ -124,7 +128,7 @@ export function FinalizePeriodModal({
             const result = await response.json();
 
             if (response.ok) {
-                alert(`✅ Period Finalized!\n\n${result.data?.message || result.message}`);
+                toast.success('Period finalized', { description: result.data?.message || result.message });
                 onSuccess();
                 onClose();
             } else {
@@ -139,7 +143,12 @@ export function FinalizePeriodModal({
     };
 
     const handleRevert = async () => {
-        if (!confirm("Are you sure you want to revert this finalization?\n\nVehicle fuel levels and driver states may need manual correction.")) {
+        if (!(await confirm({
+            title: 'Revert this finalization?',
+            description: 'Vehicle fuel levels and driver states may need manual correction.',
+            confirmText: 'Revert',
+            destructive: true,
+        }))) {
             return;
         }
 
@@ -154,7 +163,7 @@ export function FinalizePeriodModal({
             const result = await response.json();
 
             if (response.ok) {
-                alert(`✅ Finalization Reverted!\n\n${result.data || result.message}`);
+                toast.success('Finalization reverted', { description: result.data || result.message });
                 onSuccess();
                 onClose();
             } else {
@@ -181,8 +190,7 @@ export function FinalizePeriodModal({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <ModalShell onClose={onClose} title="Finalize period" className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
                     <div className="flex items-center gap-3">
@@ -509,7 +517,6 @@ export function FinalizePeriodModal({
                         </button>
                     </div>
                 )}
-            </div>
-        </div>
+            </ModalShell>
     );
 }

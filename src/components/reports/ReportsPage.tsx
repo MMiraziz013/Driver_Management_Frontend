@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { toast } from "sonner";
 import {
     Download,
     Plus,
@@ -26,6 +27,7 @@ import { FuelAllocationModal } from "./FuelAllocationModal";
 import { FinalizePeriodModal } from "./FinalizePeriodModal";
 import {useAuthFetch} from "@/auth/AuthContext";
 import { API_BASE_URL } from '@/config/api';
+import { ModalShell } from '@/components/ModalShell';
 
 interface ReportPeriod {
     id: number;
@@ -166,7 +168,7 @@ export function ReportsPage() {
     // Run auto-assignment engine
     const handleRunAssignment = async (periodId: number, period: ReportPeriod) => {
         if (isPeriodFinalized(period)) {
-            alert("⚠️ This period is already finalized. You cannot re-run assignments.");
+            toast.warning("This period is already finalized. You cannot re-run assignments.");
             return;
         }
 
@@ -179,13 +181,13 @@ export function ReportsPage() {
             const result = await response.json();
 
             if (response.ok) {
-                alert(`✅ Assignment Complete!\n\n${result.data || result.message}`);
+                toast.success('Assignment complete', { description: result.data || result.message });
                 fetchPeriods();
             } else {
-                alert("❌ Error: " + (result.message || "Assignment failed"));
+                toast.error(result.message || "Assignment failed");
             }
         } catch (error) {
-            alert("❌ Failed to connect to the assignment engine.");
+            toast.error("Failed to connect to the assignment engine.");
         } finally {
             setProcessingId(null);
             setProcessingAction("");
@@ -196,7 +198,7 @@ export function ReportsPage() {
     // Reschedule: move remaining conflicting trips to the closest free day within ±3 days.
     const handleConflictAction = async (periodId: number, period: ReportPeriod, action: "resolve" | "reschedule") => {
         if (isPeriodFinalized(period)) {
-            alert("⚠️ This period is already finalized. Revert finalization first.");
+            toast.warning("This period is already finalized. Revert finalization first.");
             return;
         }
 
@@ -213,10 +215,10 @@ export function ReportsPage() {
                 setResolveResult({ title, message: result.message, data: result.data });
                 fetchPeriods();
             } else {
-                alert("❌ Error: " + (result.errors?.join(', ') || result.message || `${title} failed`));
+                toast.error(result.errors?.join(', ') || result.message || `${title} failed`);
             }
         } catch (error) {
-            alert("❌ Failed to connect to the assignment engine.");
+            toast.error("Failed to connect to the assignment engine.");
         } finally {
             setProcessingId(null);
             setProcessingAction("");
@@ -226,7 +228,7 @@ export function ReportsPage() {
     // Run fuel allocation
     const handleRunFuelAllocation = async (periodId: number, period: ReportPeriod) => {
         if (isPeriodFinalized(period)) {
-            alert("⚠️ This period is already finalized. You cannot re-run fuel allocation.");
+            toast.warning("This period is already finalized. You cannot re-run fuel allocation.");
             return;
         }
 
@@ -239,13 +241,15 @@ export function ReportsPage() {
             const result = await response.json();
 
             if (response.ok) {
-                alert(`✅ Fuel Allocation Complete!\n\nAllocated: ${result.data?.totalFuelAllocated?.toFixed(1) || 0}L\nVehicles OK: ${result.data?.vehiclesOk || 0}\nIssues: ${result.data?.vehiclesWithIssues || 0}`);
+                toast.success('Fuel allocation complete', {
+                    description: `Allocated ${result.data?.totalFuelAllocated?.toFixed(1) || 0} L · ${result.data?.vehiclesOk || 0} vehicles OK · ${result.data?.vehiclesWithIssues || 0} with issues`,
+                });
                 fetchPeriods();
             } else {
-                alert("❌ Error: " + (result.message || "Fuel allocation failed"));
+                toast.error(result.message || "Fuel allocation failed");
             }
         } catch (error) {
-            alert("❌ Failed to connect to the fuel allocation service.");
+            toast.error("Failed to connect to the fuel allocation service.");
         } finally {
             setProcessingId(null);
             setProcessingAction("");
@@ -259,7 +263,7 @@ export function ReportsPage() {
             const response = await authFetch(`${API_BASE_URL}/reports/export/${periodId}`);
 
             if (!response.ok) {
-                alert("❌ Export failed. Make sure assignments were generated first.");
+                toast.error("Export failed. Make sure assignments were generated first.");
                 return;
             }
 
@@ -274,7 +278,7 @@ export function ReportsPage() {
             a.remove();
         } catch (error) {
             console.error("Download error:", error);
-            alert("❌ Download failed.");
+            toast.error("Download failed.");
         }
     };
 
@@ -285,7 +289,7 @@ export function ReportsPage() {
             const response = await authFetch(`${API_BASE_URL}/gas/export-detailed/${periodId}`);
 
             if (!response.ok) {
-                alert("❌ Export failed. Make sure fuel allocation was run first.");
+                toast.error("Export failed. Make sure fuel allocation was run first.");
                 return;
             }
 
@@ -300,7 +304,7 @@ export function ReportsPage() {
             a.remove();
         } catch (error) {
             console.error("Download error:", error);
-            alert("❌ Download failed.");
+            toast.error("Download failed.");
         }
     };
 
@@ -315,7 +319,7 @@ export function ReportsPage() {
 
             if (!response.ok) {
                 const errorText = await response.text();
-                alert(`❌ Export failed: ${errorText || "Make sure assignments were generated first."}`);
+                toast.error("Export failed", { description: errorText || "Make sure assignments were generated first." });
                 return;
             }
 
@@ -336,7 +340,7 @@ export function ReportsPage() {
             a.remove();
         } catch (error) {
             console.error("Download error:", error);
-            alert("❌ Download failed.");
+            toast.error("Download failed.");
         } finally {
             setProcessingId(null);
             setProcessingAction("");
@@ -359,12 +363,12 @@ export function ReportsPage() {
                 const journeysData = Array.isArray(result) ? result : (result.data || result || []);
                 setJourneys(journeysData);
             } else {
-                alert("❌ Failed to load journeys. Make sure assignments were run first.");
+                toast.error("Failed to load journeys. Make sure assignments were run first.");
                 setJourneys([]);
             }
         } catch (error) {
             console.error("Fetch journeys error:", error);
-            alert("❌ Failed to load journeys");
+            toast.error("Failed to load journeys");
             setJourneys([]);
         } finally {
             setJourneysLoading(false);
@@ -392,7 +396,7 @@ export function ReportsPage() {
     // Delete report period
     const handleDeletePeriod = async (period: ReportPeriod) => {
         if (isPeriodFinalized(period)) {
-            alert("⚠️ Cannot delete a finalized period. Revert finalization first.");
+            toast.warning("Cannot delete a finalized period. Revert finalization first.");
             return;
         }
 
@@ -411,13 +415,13 @@ export function ReportsPage() {
             const result = await response.json();
 
             if (response.ok) {
-                alert(`✅ ${result.data || result.message || 'Period deleted successfully'}`);
+                toast.success(result.data || result.message || 'Period deleted');
                 fetchPeriods();
             } else {
-                alert("❌ Error: " + (result.errors?.join(', ') || result.message || "Delete failed"));
+                toast.error(result.errors?.join(', ') || result.message || "Delete failed");
             }
         } catch (error) {
-            alert("❌ Failed to delete period.");
+            toast.error("Failed to delete period.");
         } finally {
             setDeletingPeriodId(null);
             setConfirmDeletePeriod(null);
@@ -851,8 +855,11 @@ export function ReportsPage() {
 
             {/* Journeys Modal */}
             {isJourneysModalOpen && selectedPeriod && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                <ModalShell onClose={() => {
+                    setIsJourneysModalOpen(false);
+                    setSelectedPeriod(null);
+                    setJourneys([]);
+                }} title="Journeys" className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Header */}
                         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                             <div>
@@ -992,13 +999,11 @@ export function ReportsPage() {
                                 Close
                             </button>
                         </div>
-                    </div>
-                </div>
+                    </ModalShell>
             )}
             {/* Resolve / Reschedule Conflicts Result Modal */}
             {resolveResult && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+                <ModalShell onClose={() => setResolveResult(null)} title="Resolve conflicts result" className="max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
                         {/* Header */}
                         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
                             <div>
@@ -1116,13 +1121,11 @@ export function ReportsPage() {
                                 Close
                             </button>
                         </div>
-                    </div>
-                </div>
+                    </ModalShell>
             )}
             {/* Delete Confirmation Modal */}
             {confirmDeletePeriod && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                    <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+                <ModalShell onClose={() => setConfirmDeletePeriod(null)} title="Delete report period" className="max-w-md p-6" preventClose={deletingPeriodId !== null}>
                         <div className="flex items-center gap-3 mb-4">
                             <div className="p-3 bg-red-100 rounded-full">
                                 <AlertTriangle className="w-6 h-6 text-red-600" />
@@ -1163,8 +1166,7 @@ export function ReportsPage() {
                                 Delete Period
                             </button>
                         </div>
-                    </div>
-                </div>
+                    </ModalShell>
             )}
         </div>
     );

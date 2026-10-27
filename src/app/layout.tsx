@@ -5,6 +5,8 @@ import "./globals.css";
 
 // Import AuthProvider - this MUST wrap everything
 import { AuthProvider } from "@/auth/AuthContext";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -30,8 +32,11 @@ export default function RootLayout({
         <html lang="en" suppressHydrationWarning>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AuthProvider>
-            {children}
+            <ConfirmProvider>
+                {children}
+            </ConfirmProvider>
         </AuthProvider>
+        <Toaster theme="light" position="top-right" richColors closeButton />
         </body>
         </html>
     );

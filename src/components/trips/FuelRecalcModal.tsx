@@ -5,6 +5,7 @@ import {
     FuelRecalculationResponse,
     FuelViolationDto
 } from '@/services/fuelService';
+import { ModalShell } from '@/components/ModalShell';
 
 interface FuelRecalcModalProps {
     periodId: number;
@@ -60,8 +61,7 @@ export function FuelRecalcModal({ periodId, vehicleId, plateNumber, preview, tok
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
+        <ModalShell onClose={onClose} title="Recalculate fuel" className="max-w-xl max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <div>
@@ -170,7 +170,6 @@ export function FuelRecalcModal({ periodId, vehicleId, plateNumber, preview, tok
                         </button>
                     )}
                 </div>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

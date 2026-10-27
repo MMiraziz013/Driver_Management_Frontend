@@ -81,7 +81,7 @@ export interface UpdateVehicleTypeDto {
 }
 
 export const getVehicleTypes = async (): Promise<any> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.get(`${API_BASE_URL}/vehicle-types`, {
         headers: { Authorization: `Bearer ${token}` },
     });

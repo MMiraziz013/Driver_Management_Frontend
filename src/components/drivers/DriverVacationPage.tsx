@@ -19,6 +19,8 @@ import { useAuth, useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
 import { AddVacationModal } from './AddVacationModal';
 import { EditVacationModal } from './EditVacationModal';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface DriverVacation {
     id: number;
@@ -108,11 +110,11 @@ export function DriverVacationsPage() {
                 setDeleteConfirmId(null);
             } else {
                 const data = await response.json();
-                alert(`Failed to delete: ${data.message || 'Unknown error'}`);
+                toast.error(`Failed to delete: ${data.message || 'Unknown error'}`);
             }
         } catch (err) {
             console.error('Delete error:', err);
-            alert('Error deleting vacation. Please try again.');
+            toast.error('Error deleting vacation. Please try again.');
         } finally {
             setIsDeleting(false);
         }
@@ -402,8 +404,7 @@ export function DriverVacationsPage() {
 
             {/* Delete Confirmation Modal */}
             {deleteConfirmId !== null && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                <ModalShell onClose={() => setDeleteConfirmId(null)} title="Delete vacation" className="p-6 max-w-md">
                         <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Vacation</h3>
                         <p className="text-gray-600 mb-6">
                             Are you sure you want to delete this vacation period? This action cannot be undone.
@@ -431,8 +432,7 @@ export function DriverVacationsPage() {
                                 )}
                             </button>
                         </div>
-                    </div>
-                </div>
+                    </ModalShell>
             )}
 
             {/* Add Modal */}

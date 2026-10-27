@@ -7,6 +7,7 @@ import {
     updateVehicleTypeFallbacks,
 } from '@/services/vehicleTypeService';
 import { useAuth } from '@/auth/AuthContext';
+import { ModalShell } from '@/components/ModalShell';
 
 interface VehicleTypeOption {
     id: number;
@@ -99,8 +100,7 @@ export function VehicleTypeFallbacksModal({ vehicleType, onClose, onSaved }: Veh
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <ModalShell onClose={onClose} title="Vehicle type fallbacks" className="max-w-lg max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                     <div>
@@ -217,7 +217,6 @@ export function VehicleTypeFallbacksModal({ vehicleType, onClose, onSaved }: Veh
                         Save
                     </button>
                 </div>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

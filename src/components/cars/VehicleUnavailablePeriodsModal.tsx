@@ -8,6 +8,8 @@ import {
     updateVehicleUnavailablePeriod,
     deleteVehicleUnavailablePeriod
 } from '@/services/vehicleAvailablityService';
+import { useConfirm } from '@/components/ConfirmDialog';
+import { ModalShell } from '@/components/ModalShell';
 
 interface Props {
     isOpen: boolean;
@@ -31,6 +33,7 @@ const COMMON_REASONS = [
 ];
 
 export function VehicleUnavailablePeriodsModal({ isOpen, vehicleId, vehiclePlate, onClose }: Props) {
+    const confirm = useConfirm();
     const authFetch = useAuthFetch();
 
     const [periods, setPeriods] = useState<VehicleUnavailablePeriod[]>([]);
@@ -122,7 +125,7 @@ export function VehicleUnavailablePeriodsModal({ isOpen, vehicleId, vehiclePlate
     };
 
     const handleDelete = async (id: number) => {
-        if (!window.confirm('Delete this unavailable period?')) return;
+        if (!(await confirm({ title: 'Delete this unavailable period?', destructive: true }))) return;
 
         try {
             await deleteVehicleUnavailablePeriod(authFetch, id);
@@ -171,8 +174,7 @@ export function VehicleUnavailablePeriodsModal({ isOpen, vehicleId, vehiclePlate
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <ModalShell onClose={onClose} title="Unavailable periods" className="max-w-2xl max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-slate-200">
                     <div>
@@ -437,7 +439,6 @@ export function VehicleUnavailablePeriodsModal({ isOpen, vehicleId, vehiclePlate
                         <span>{periods.length} period(s) total</span>
                     </div>
                 </div>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

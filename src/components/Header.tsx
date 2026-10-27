@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/auth/AuthContext';
 import { User, LogOut, ChevronDown, Shield, Eye } from 'lucide-react';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 export function Header() {
+    const confirm = useConfirm();
     const { user, logout, canManage } = useAuth();
     const [showUserMenu, setShowUserMenu] = useState(false);
 
-    const handleLogout = () => {
-        if (confirm('Are you sure you want to sign out?')) {
+    const handleLogout = async () => {
+        if (await confirm({ title: 'Sign out?', confirmText: 'Sign out' })) {
             logout();
         }
     };

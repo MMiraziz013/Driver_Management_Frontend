@@ -203,7 +203,7 @@ export const generateFarmOutReport = async (request: FarmOutReportRequestDto): P
 };
 
 export const exportFarmOutReport = async (request: FarmOutReportRequestDto): Promise<Blob> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(
         `${API_BASE_URL}/accounting/farm-out/export`,
         request,
@@ -225,7 +225,7 @@ export const generateCarRevenueReport = async (request: CarRevenueReportRequestD
 };
 
 export const exportCarRevenueReport = async (request: CarRevenueReportRequestDto): Promise<Blob> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(
         `${API_BASE_URL}/accounting/car-revenue/export`,
         request,
@@ -241,7 +241,7 @@ export const exportCarRevenueReport = async (request: CarRevenueReportRequestDto
 
 
 const getAuthHeaders = () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     return {
         headers: {
             Authorization: `Bearer ${token}`,
@@ -289,7 +289,7 @@ export const uploadAccountingReport = async (
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(
         `${API_BASE_URL}/accounting/upload/${year}/${month}`,
         formData,
@@ -315,7 +315,7 @@ export const generateAnalysisReport = async (request: AnalysisReportRequestDto):
 };
 
 export const exportAnalysisReport = async (request: AnalysisReportRequestDto): Promise<Blob> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(
         `${API_BASE_URL}/accounting/analysis/export`,
         request,
@@ -337,7 +337,7 @@ export const generateCompanyRevenueReport = async (request: CompanyRevenueReport
 };
 
 export const exportCompanyRevenueReport = async (request: CompanyRevenueReportRequestDto): Promise<Blob> => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('authToken');
     const response = await axios.post(
         `${API_BASE_URL}/accounting/company-revenue/export`,
         request,

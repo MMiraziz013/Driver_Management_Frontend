@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Calendar, Loader2, AlertCircle } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { ModalShell } from '@/components/ModalShell';
 
 interface DriverVacation {
     id: number;
@@ -123,8 +124,7 @@ export function EditVacationModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <ModalShell onClose={handleClose} title="Edit vacation" className="max-w-md overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
                     <div className="flex items-center gap-3">
@@ -243,7 +243,6 @@ export function EditVacationModal({
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

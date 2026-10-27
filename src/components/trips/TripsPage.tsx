@@ -13,8 +13,11 @@ import {
 import { previewVehicleFuelRecalculation, FuelRecalculationResponse } from '@/services/fuelService';
 import { EditTripModal } from './EditTripModal';
 import { FuelRecalcModal } from './FuelRecalcModal';
+import { useConfirm } from '@/components/ConfirmDialog';
+import { toast } from 'sonner';
 
 export function TripsPage() {
+    const confirm = useConfirm();
     const { token } = useAuth();
 
     const [periods, setPeriods] = useState<ReportPeriodSummary[]>([]);
@@ -129,7 +132,7 @@ export function TripsPage() {
                 handleRefresh();
             }
         } catch (err) {
-            alert('Failed to recalculate distance: ' + (err as Error).message);
+            toast.error('Failed to recalculate distance: ' + (err as Error).message);
         } finally {
             setRecalculatingId(null);
         }
@@ -148,7 +151,7 @@ export function TripsPage() {
                 preview,
             });
         } catch (err) {
-            alert('Failed to recalculate fuel: ' + (err as Error).message);
+            toast.error('Failed to recalculate fuel: ' + (err as Error).message);
         } finally {
             setRecalculatingFuelId(null);
         }
@@ -156,13 +159,13 @@ export function TripsPage() {
 
     const handleDeleteTrip = async (tripId: number) => {
         if (!token) return;
-        if (!confirm('Are you sure you want to delete this trip?')) return;
+        if (!(await confirm({ title: 'Delete this trip?', description: 'This cannot be undone.', destructive: true }))) return;
 
         try {
             await deleteTrip(tripId, token);
             setTrips(prev => prev.filter(t => t.id !== tripId));
         } catch (err) {
-            alert('Failed to delete trip');
+            toast.error('Failed to delete trip');
         }
     };
 

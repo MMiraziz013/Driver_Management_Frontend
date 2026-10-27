@@ -4,6 +4,8 @@ import { AddServiceTypeModal } from './AddServiceTypeModal';
 import { EditServiceTypeModal } from './EditServiceTypeModal';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface ServiceType {
     id: number;
@@ -66,11 +68,11 @@ export function ServiceTypesPage() {
                 setDeleteId(null);
             } else {
                 const errData = await response.json();
-                alert(`Failed to delete: ${errData.message || 'Unknown error'}`);
+                toast.error(`Failed to delete: ${errData.message || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error deleting service type:', error);
-            alert('Error deleting service type. Please try again.');
+            toast.error('Error deleting service type. Please try again.');
         } finally {
             setIsDeleting(false);
         }
@@ -207,8 +209,7 @@ export function ServiceTypesPage() {
 
             {/* Delete Confirmation Modal */}
             {deleteId !== null && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                <ModalShell onClose={() => setDeleteId(null)} title="Delete service type" className="p-6 max-w-md">
                         <h3 className="text-lg font-bold text-slate-900 mb-2">Delete Service Type</h3>
                         <p className="text-slate-600 mb-6">
                             Are you sure you want to delete this service type? This action cannot be undone.
@@ -236,8 +237,7 @@ export function ServiceTypesPage() {
                                 )}
                             </button>
                         </div>
-                    </div>
-                </div>
+                    </ModalShell>
             )}
 
             {/* Modals */}

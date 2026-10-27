@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface AddCarModalProps {
     isOpen: boolean;
@@ -109,18 +111,17 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
                 resetForm();
             } else {
                 const errData = await response.json();
-                alert(`Error: ${errData.message || 'Failed to save vehicle'}`);
+                toast.error(`${errData.message || 'Failed to save vehicle'}`);
             }
         } catch (error) {
-            alert("Connection error. Is the backend running?");
+            toast.error("Connection error. Is the backend running?");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in duration-200 max-h-[90vh] flex flex-col">
+        <ModalShell onClose={onClose} title="Add vehicle" className="max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                     <h2 className="text-xl font-bold text-black">Add New Vehicle</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-black transition-colors">
@@ -322,7 +323,6 @@ export function AddCarModal({ isOpen, onClose, onSuccess }: AddCarModalProps) {
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

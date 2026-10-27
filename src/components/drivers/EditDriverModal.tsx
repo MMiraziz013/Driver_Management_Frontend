@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { updateDriver, UpdateDriverDto } from '@/services/driverService';
+import { ModalShell } from '@/components/ModalShell';
 
 interface EditDriverModalProps {
     isOpen: boolean;
@@ -93,8 +94,7 @@ export function EditDriverModal({ isOpen, driver, token, onClose, onSuccess }: E
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <ModalShell onClose={onClose} title="Edit driver" className="max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
                     <h2 className="text-xl font-bold text-slate-900">Edit Driver</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
@@ -197,7 +197,6 @@ export function EditDriverModal({ isOpen, driver, token, onClose, onSuccess }: E
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

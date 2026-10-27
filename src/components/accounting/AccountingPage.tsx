@@ -33,6 +33,7 @@ import {
     exportFarmOutReport, generateFarmOutReport, CompanyRevenueReportDto, exportCompanyRevenueReport,
     generateCompanyRevenueReport,
 } from '@/services/accountingService';
+import { useConfirm } from '@/components/ConfirmDialog';
 
 type ReportTab = 'analysis' | 'car-revenue' | 'farm-out' | 'company-revenue';
 type SettingsTab = 'upload' | 'exchange-rates';
@@ -45,6 +46,7 @@ const MONTHS = [
 const AVAILABLE_YEARS = [2021, 2022, 2023, 2024, 2025, 2026];
 
 export default function AccountingPage() {
+    const confirm = useConfirm();
     // Tab state
     const [activeTab, setActiveTab] = useState<ReportTab>('analysis');
     const [showSettings, setShowSettings] = useState(false);
@@ -151,7 +153,7 @@ export default function AccountingPage() {
     };
 
     const handleDeleteReport = async (year: number, month: number) => {
-        if (!confirm(`Delete report for ${MONTHS[month - 1]} ${year}?`)) return;
+        if (!(await confirm({ title: `Delete report for ${MONTHS[month - 1]} ${year}?`, destructive: true }))) return;
 
         try {
             await deleteAccountingReport(year, month);

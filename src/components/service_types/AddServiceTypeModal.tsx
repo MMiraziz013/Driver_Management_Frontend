@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface AddServiceTypeModalProps {
     isOpen: boolean;
@@ -45,11 +47,11 @@ export function AddServiceTypeModal({ isOpen, onClose, onSuccess }: AddServiceTy
                 resetForm();
             } else {
                 const errData = await response.json();
-                alert(`Error: ${errData.message || 'Failed to create service type'}`);
+                toast.error(`${errData.message || 'Failed to create service type'}`);
             }
         } catch (error) {
             console.error('Error creating service type:', error);
-            alert('Connection error. Is the backend running?');
+            toast.error('Connection error. Is the backend running?');
         } finally {
             setIsSubmitting(false);
         }
@@ -61,8 +63,7 @@ export function AddServiceTypeModal({ isOpen, onClose, onSuccess }: AddServiceTy
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <ModalShell onClose={handleClose} title="Add service type" className="max-w-md overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                     <h2 className="text-xl font-bold text-slate-900">Add Service Type</h2>
                     <button
@@ -126,7 +127,6 @@ export function AddServiceTypeModal({ isOpen, onClose, onSuccess }: AddServiceTy
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

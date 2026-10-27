@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { TripDto, updateTrip, UpdateTripDto } from '@/services/tripService';
 import { API_BASE_URL } from '@/config/api';
+import { ModalShell } from '@/components/ModalShell';
 
 interface Props {
     trip: TripDto;
@@ -107,8 +108,7 @@ export function EditTripModal({ trip, token, onClose, onSuccess }: Props) {
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+        <ModalShell onClose={onClose} title="Edit trip" className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b">
                     <div>
@@ -328,7 +328,6 @@ export function EditTripModal({ trip, token, onClose, onSuccess }: Props) {
                         Save Changes
                     </button>
                 </div>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

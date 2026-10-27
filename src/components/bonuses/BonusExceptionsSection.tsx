@@ -11,6 +11,7 @@ import {
     BonusCalculationExceptionDto,
     ServiceTypeBonusConfigDto,
 } from '@/services/bonusService';
+import { ModalShell } from '@/components/ModalShell';
 
 interface BonusExceptionsSectionProps {
     serviceTypeConfigs: ServiceTypeBonusConfigDto[];
@@ -193,8 +194,7 @@ export function BonusExceptionsSection({ serviceTypeConfigs }: BonusExceptionsSe
 
             {/* Delete Confirmation */}
             {deleteId !== null && (
-                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                <ModalShell onClose={() => setDeleteId(null)} title="Delete exception" className="p-6 max-w-md">
                         <h3 className="text-lg font-bold text-slate-900 mb-2">Delete Exception</h3>
                         <p className="text-slate-600 mb-6">
                             Are you sure? Matching trips will be calculated with their service type&apos;s normal method again.
@@ -216,8 +216,7 @@ export function BonusExceptionsSection({ serviceTypeConfigs }: BonusExceptionsSe
                                 Delete
                             </button>
                         </div>
-                    </div>
-                </div>
+                    </ModalShell>
             )}
 
             <BonusExceptionModal

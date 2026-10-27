@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, Loader2, AlertCircle, FileSpreadsheet, CheckCircle } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
 import { API_BASE_URL } from '@/config/api';
+import { ModalShell } from '@/components/ModalShell';
 
 interface ReportPeriod {
     id: number;
@@ -163,8 +164,7 @@ export function UploadTripsModal({ isOpen, onClose, onSuccess, periodId, periods
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <ModalShell onClose={handleClose} title="Upload trip data" className="max-w-md overflow-hidden">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
                     <div className="flex items-center gap-3">
@@ -323,7 +323,6 @@ export function UploadTripsModal({ isOpen, onClose, onSuccess, periodId, periods
                         )}
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

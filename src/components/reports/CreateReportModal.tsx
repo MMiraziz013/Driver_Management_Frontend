@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Upload, Loader2, AlertCircle } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
 import { API_BASE_URL } from '@/config/api';
+import { ModalShell } from '@/components/ModalShell';
 
 interface CreateReportModalProps {
     isOpen: boolean;
@@ -87,8 +88,7 @@ export function CreateReportModal({ isOpen, onClose, onSuccess }: CreateReportMo
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-200">
+        <ModalShell onClose={onClose} title="Upload report data" className="max-w-md overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                     <h2 className="text-xl font-bold text-slate-900">Upload Report Data</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
@@ -178,7 +178,6 @@ export function CreateReportModal({ isOpen, onClose, onSuccess }: CreateReportMo
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

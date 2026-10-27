@@ -3,6 +3,8 @@ import { X } from 'lucide-react';
 import { addDriver, AddDriverDto } from '@/services/driverService';
 import { useAuthFetch } from '@/auth/AuthContext';
 import { useAuth } from '@/auth/AuthContext';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 
 interface AddDriverModalProps {
@@ -56,15 +58,14 @@ export function AddDriverModal({ isOpen, onClose, onSuccess }: AddDriverModalPro
             setCategory('');
             setEmploymentType('');
         } catch (error) {
-            alert(error instanceof Error ? error.message : "Submission failed");
+            toast.error(error instanceof Error ? error.message : "Submission failed");
         } finally {
             setIsSubmitting(false);
         }
     };
 
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <ModalShell onClose={onClose} title="Add driver" className="max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between p-6 border-b border-slate-200 sticky top-0 bg-white">
                     <h2 className="text-xl font-bold text-slate-900">Add a Driver</h2>
                     <button onClick={onClose} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
@@ -133,7 +134,6 @@ export function AddDriverModal({ isOpen, onClose, onSuccess }: AddDriverModalPro
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Loader2, AlertCircle, Fuel, Download, CheckCircle, AlertTriangle, Car } from 'lucide-react';
 import {useAuthFetch} from "@/auth/AuthContext";
 import { API_BASE_URL } from '@/config/api';
+import { toast } from 'sonner';
+import { ModalShell } from '@/components/ModalShell';
 
 interface VehicleFuelStatus {
     vehicleId: number;
@@ -109,7 +111,7 @@ export function FuelAllocationModal({ isOpen, onClose, periodId }: FuelAllocatio
             const response = await authFetch(`${API_BASE_URL}/fuel/export/${periodId}`);
 
             if (!response.ok) {
-                alert("Export failed. Please run allocation first.");
+                toast.error("Export failed. Please run allocation first.");
                 return;
             }
 
@@ -123,7 +125,7 @@ export function FuelAllocationModal({ isOpen, onClose, periodId }: FuelAllocatio
             window.URL.revokeObjectURL(url);
             a.remove();
         } catch (err) {
-            alert("Download failed.");
+            toast.error("Download failed.");
         }
     };
 
@@ -169,8 +171,7 @@ export function FuelAllocationModal({ isOpen, onClose, periodId }: FuelAllocatio
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden animate-in fade-in zoom-in duration-200 flex flex-col">
+        <ModalShell onClose={onClose} title="Fuel allocation" className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100 flex-shrink-0">
                     <div className="flex items-center gap-3">
@@ -386,7 +387,6 @@ export function FuelAllocationModal({ isOpen, onClose, periodId }: FuelAllocatio
                         </button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </ModalShell>
     );
 }

@@ -9,6 +9,7 @@ import {
     createBonusException,
     updateBonusException,
 } from '@/services/bonusService';
+import { ModalShell } from '@/components/ModalShell';
 
 interface Option {
     id: number | string;
@@ -131,8 +132,7 @@ export function BonusExceptionModal({
     };
 
     return (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+        <ModalShell onClose={onClose} title="Bonus exception" className="max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-slate-100">
                     <h2 className="text-xl font-bold text-slate-900">
                         {exception ? 'Edit Exception' : 'Add Exception'}
@@ -330,7 +330,6 @@ export function BonusExceptionModal({
                         </button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </ModalShell>
     );
 }
