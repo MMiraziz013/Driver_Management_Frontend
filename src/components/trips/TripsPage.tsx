@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Loader2, Search, Edit2, Calculator, Trash2, Filter } from 'lucide-react';
+import { RefreshCw, Loader2, Search, Edit2, Calculator, Trash2, Filter, Fuel } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import {
     getReportPeriods,
@@ -10,7 +10,9 @@ import {
     TripDto,
     ReportPeriodSummary
 } from '@/services/tripService';
+import { previewVehicleFuelRecalculation, FuelRecalculationResponse } from '@/services/fuelService';
 import { EditTripModal } from './EditTripModal';
+import { FuelRecalcModal } from './FuelRecalcModal';
 
 export function TripsPage() {
     const { token } = useAuth();
@@ -29,6 +31,13 @@ export function TripsPage() {
 
     const [editingTrip, setEditingTrip] = useState<TripDto | null>(null);
     const [recalculatingId, setRecalculatingId] = useState<number | null>(null);
+    const [recalculatingFuelId, setRecalculatingFuelId] = useState<number | null>(null);
+    const [fuelPreview, setFuelPreview] = useState<{
+        periodId: number;
+        vehicleId: number;
+        plateNumber: string;
+        preview: FuelRecalculationResponse;
+    } | null>(null);
 
     // Load periods on mount
     useEffect(() => {
@@ -123,6 +132,25 @@ export function TripsPage() {
             alert('Failed to recalculate distance: ' + (err as Error).message);
         } finally {
             setRecalculatingId(null);
+        }
+    };
+
+    const handleRecalculateFuel = async (trip: TripDto) => {
+        if (!token || !selectedPeriodId || trip.assignedVehicleId == null) return;
+        const vehicleId = trip.assignedVehicleId;
+        setRecalculatingFuelId(trip.id);
+        try {
+            const preview = await previewVehicleFuelRecalculation(selectedPeriodId, vehicleId, token);
+            setFuelPreview({
+                periodId: selectedPeriodId,
+                vehicleId,
+                plateNumber: trip.assignedVehiclePlate ?? String(vehicleId),
+                preview,
+            });
+        } catch (err) {
+            alert('Failed to recalculate fuel: ' + (err as Error).message);
+        } finally {
+            setRecalculatingFuelId(null);
         }
     };
 
@@ -351,6 +379,20 @@ export function TripsPage() {
                                                 )}
                                             </button>
                                             <button
+                                                onClick={() => handleRecalculateFuel(trip)}
+                                                disabled={trip.assignedVehicleId == null || recalculatingFuelId === trip.id}
+                                                className="p-1.5 text-slate-500 hover:text-amber-600 hover:bg-amber-50 rounded disabled:opacity-50 disabled:hover:text-slate-500 disabled:hover:bg-transparent"
+                                                title={trip.assignedVehicleId == null
+                                                    ? 'No vehicle assigned to this trip'
+                                                    : `Recalculates fuel for vehicle ${trip.assignedVehiclePlate} for the whole period, not just this trip`}
+                                            >
+                                                {recalculatingFuelId === trip.id ? (
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                ) : (
+                                                    <Fuel className="w-4 h-4" />
+                                                )}
+                                            </button>
+                                            <button
                                                 onClick={() => handleDeleteTrip(trip.id)}
                                                 className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded"
                                                 title="Delete trip"
@@ -374,6 +416,18 @@ export function TripsPage() {
                     token={token!}
                     onClose={() => setEditingTrip(null)}
                     onSuccess={handleEditSuccess}
+                />
+            )}
+
+            {/* Fuel Recalculation Modal */}
+            {fuelPreview && (
+                <FuelRecalcModal
+                    periodId={fuelPreview.periodId}
+                    vehicleId={fuelPreview.vehicleId}
+                    plateNumber={fuelPreview.plateNumber}
+                    preview={fuelPreview.preview}
+                    token={token!}
+                    onClose={() => setFuelPreview(null)}
                 />
             )}
         </div>

@@ -62,3 +62,103 @@ export async function updateFuelSettings(dto: UpdateFuelSettingsDto, token: stri
     const data = await response.json();
     return data.data;
 }
+
+// Targeted fuel recalculation
+export interface FuelViolationDto {
+    date: string;
+    kind: 'Overflow' | 'Deficit';
+    // Tank level that day
+    level: number;
+}
+
+export interface FuelRecalculationVehicleDto {
+    vehicleId: number;
+    plateNumber: string;
+    selectedBecause: 'Picked' | 'Overflow' | 'Deficit';
+    litersBefore: number;
+    litersAfter: number;
+    costBefore: number;
+    costAfter: number;
+    endingLevelBefore: number;
+    endingLevelAfter: number;
+    violationsBefore: FuelViolationDto[];
+    violationsAfter: FuelViolationDto[];
+}
+
+export interface FuelRecalculationResult {
+    reportPeriodId: number;
+    saved: boolean;
+    litersReleased: number;
+    litersReallocated: number;
+    litersLeftUnallocated: number;
+    warnings: string[];
+    vehicles: FuelRecalculationVehicleDto[];
+}
+
+export interface FuelRecalculationResponse {
+    message: string;
+    data: FuelRecalculationResult;
+}
+
+async function readRecalculationError(response: Response, fallback: string): Promise<string> {
+    if (response.status === 403) {
+        return 'You do not have permission to perform this action.';
+    }
+    try {
+        const data = await response.json();
+        if (Array.isArray(data.errors) && data.errors.length > 0) {
+            return data.errors[0];
+        }
+        if (data.message) {
+            return data.message;
+        }
+    } catch {
+        // Body is not JSON, use the fallback message
+    }
+    return fallback;
+}
+
+// Dry run: nothing is saved
+export async function previewVehicleFuelRecalculation(
+    periodId: number,
+    vehicleId: number,
+    token: string
+): Promise<FuelRecalculationResponse> {
+    const response = await fetch(
+        `${API_BASE_URL}/gas/allocate/${periodId}/recalculate/preview?vehicleIds=${vehicleId}`,
+        {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            },
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error(await readRecalculationError(response, 'Failed to preview fuel recalculation'));
+    }
+
+    const data = await response.json();
+    return { message: data.message, data: data.data };
+}
+
+export async function recalculateVehicleFuel(
+    periodId: number,
+    vehicleId: number,
+    token: string
+): Promise<FuelRecalculationResponse> {
+    const response = await fetch(`${API_BASE_URL}/gas/allocate/${periodId}/recalculate`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ vehicleIds: [vehicleId] }),
+    });
+
+    if (!response.ok) {
+        throw new Error(await readRecalculationError(response, 'Failed to recalculate fuel'));
+    }
+
+    const data = await response.json();
+    return { message: data.message, data: data.data };
+}

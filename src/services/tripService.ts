@@ -18,6 +18,11 @@ export interface TripDto {
     includedInReport: boolean;
     importedDriverName: string | null;
     importedVehiclePlate: string | null;
+    // Successful assignment; null when unassigned, a conflict, cash or Samarkand
+    assignedVehicleId?: number | null;
+    assignedVehiclePlate?: string | null;
+    assignedDriverId?: number | null;
+    assignedDriverName?: string | null;
     pmtMethod: string | null;
     vehicleTypeName: string;
     serviceTypeName: string;
