@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, Loader2, Search, Edit2, Calculator, Trash2, Filter, Fuel } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { RefreshCw, Loader2, Search, Edit2, Calculator, Trash2, Filter, Fuel, ArrowUp, ArrowDown, ArrowUpDown } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import {
     getReportPeriods,
@@ -16,6 +16,84 @@ import { FuelRecalcModal } from './FuelRecalcModal';
 import { useConfirm } from '@/components/ConfirmDialog';
 import { toast } from 'sonner';
 
+const PERIOD_STORAGE_KEY = 'trips.selectedPeriodId';
+
+function readStoredPeriodId(): number | null {
+    try {
+        const value = localStorage.getItem(PERIOD_STORAGE_KEY);
+        return value ? Number(value) : null;
+    } catch {
+        return null;
+    }
+}
+
+function storePeriodId(id: number) {
+    try {
+        localStorage.setItem(PERIOD_STORAGE_KEY, String(id));
+    } catch {
+        // Storage unavailable (private mode etc.); the default period is used next time
+    }
+}
+
+type SortKey = 'date' | 'distance' | 'idle';
+type SortState = { key: SortKey; dir: 'asc' | 'desc' } | null;
+
+function sortValue(trip: TripDto, key: SortKey): string | number | null {
+    switch (key) {
+        case 'date':
+            return `${trip.pickUpDate.substring(0, 10)} ${trip.garageOutTime}`;
+        case 'distance':
+            return trip.distanceKm;
+        case 'idle':
+            return trip.drivingDurationHours != null ? trip.idleHours : null;
+    }
+}
+
+function SortableHeader({ label, sortKey, sort, onSort, align = 'left' }: {
+    label: string;
+    sortKey: SortKey;
+    sort: SortState;
+    onSort: (key: SortKey) => void;
+    align?: 'left' | 'right';
+}) {
+    const active = sort?.key === sortKey;
+    const Icon = !active ? ArrowUpDown : sort.dir === 'asc' ? ArrowUp : ArrowDown;
+    return (
+        <th
+            className={`px-4 py-3 font-semibold text-slate-700 ${align === 'right' ? 'text-right' : 'text-left'}`}
+            aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        >
+            <button
+                onClick={() => onSort(sortKey)}
+                className={`inline-flex items-center gap-1 hover:text-indigo-600 ${align === 'right' ? 'flex-row-reverse' : ''}`}
+            >
+                {label}
+                <Icon className={`w-3.5 h-3.5 ${active ? 'text-indigo-600' : 'text-slate-400'}`} />
+            </button>
+        </th>
+    );
+}
+
+// Shows the assigned value, with the imported one in the tooltip; falls back to the imported value
+function AssignedCell({ assigned, imported, className }: {
+    assigned?: string | null;
+    imported: string | null;
+    className: string;
+}) {
+    if (assigned) {
+        return (
+            <td className={className} title={imported && imported !== assigned ? `Imported: ${imported}` : undefined}>
+                {assigned}
+            </td>
+        );
+    }
+    return (
+        <td className={`${className} !text-slate-400`} title={imported ? 'Imported value; not assigned' : undefined}>
+            {imported || '-'}
+        </td>
+    );
+}
+
 export function TripsPage() {
     const confirm = useConfirm();
     const { token } = useAuth();
@@ -23,14 +101,15 @@ export function TripsPage() {
     const [periods, setPeriods] = useState<ReportPeriodSummary[]>([]);
     const [selectedPeriodId, setSelectedPeriodId] = useState<number | null>(null);
     const [trips, setTrips] = useState<TripDto[]>([]);
-    const [filteredTrips, setFilteredTrips] = useState<TripDto[]>([]);
 
     const [loading, setLoading] = useState(true);
     const [tripsLoading, setTripsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [filterUnresolved, setFilterUnresolved] = useState(false);
+    const [sort, setSort] = useState<SortState>(null);
 
     const [editingTrip, setEditingTrip] = useState<TripDto | null>(null);
     const [recalculatingId, setRecalculatingId] = useState<number | null>(null);
@@ -50,7 +129,8 @@ export function TripsPage() {
                 const data = await getReportPeriods(token);
                 setPeriods(data);
                 if (data.length > 0) {
-                    setSelectedPeriodId(data[0].id);
+                    const storedId = readStoredPeriodId();
+                    setSelectedPeriodId(data.some(p => p.id === storedId) ? storedId : data[0].id);
                 }
             } catch (err) {
                 setError('Failed to load report periods');
@@ -79,18 +159,26 @@ export function TripsPage() {
         loadTrips();
     }, [token, selectedPeriodId]);
 
-    // Filter trips
+    // Wait for typing to pause before filtering
     useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(searchTerm), 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    // Filter and sort trips
+    const filteredTrips = useMemo(() => {
         let result = trips;
 
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
+        if (debouncedSearch) {
+            const term = debouncedSearch.toLowerCase();
             result = result.filter(t =>
                 t.confNumber.toLowerCase().includes(term) ||
                 t.companyName.toLowerCase().includes(term) ||
                 t.routingDetails.toLowerCase().includes(term) ||
                 (t.importedDriverName?.toLowerCase().includes(term)) ||
-                (t.importedVehiclePlate?.toLowerCase().includes(term))
+                (t.importedVehiclePlate?.toLowerCase().includes(term)) ||
+                (t.assignedDriverName?.toLowerCase().includes(term)) ||
+                (t.assignedVehiclePlate?.toLowerCase().includes(term))
             );
         }
 
@@ -98,8 +186,28 @@ export function TripsPage() {
             result = result.filter(t => !t.coordinatesResolved);
         }
 
-        setFilteredTrips(result);
-    }, [trips, searchTerm, filterUnresolved]);
+        if (sort) {
+            const factor = sort.dir === 'asc' ? 1 : -1;
+            result = [...result].sort((a, b) => {
+                const av = sortValue(a, sort.key);
+                const bv = sortValue(b, sort.key);
+                // Missing values always go last
+                if (av === null) return bv === null ? 0 : 1;
+                if (bv === null) return -1;
+                return (av < bv ? -1 : av > bv ? 1 : 0) * factor;
+            });
+        }
+
+        return result;
+    }, [trips, debouncedSearch, filterUnresolved, sort]);
+
+    // Click cycles ascending -> descending -> original order
+    const handleSort = (key: SortKey) => {
+        setSort(prev => {
+            if (prev?.key !== key) return { key, dir: 'asc' };
+            return prev.dir === 'asc' ? { key, dir: 'desc' } : null;
+        });
+    };
 
     const handleRefresh = useCallback(async () => {
         if (!token || !selectedPeriodId) return;
@@ -212,7 +320,11 @@ export function TripsPage() {
                         </label>
                         <select
                             value={selectedPeriodId || ''}
-                            onChange={e => setSelectedPeriodId(Number(e.target.value))}
+                            onChange={e => {
+                                const id = Number(e.target.value);
+                                setSelectedPeriodId(id);
+                                storePeriodId(id);
+                            }}
                             className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                         >
                             {periods.map(p => (
@@ -281,14 +393,14 @@ export function TripsPage() {
                         <thead className="bg-slate-50 border-b border-slate-200">
                         <tr>
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Conf#</th>
-                            <th className="text-left px-4 py-3 font-semibold text-slate-700">Date</th>
+                            <SortableHeader label="Date" sortKey="date" sort={sort} onSort={handleSort} />
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Time</th>
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Company</th>
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Service</th>
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Driver</th>
                             <th className="text-left px-4 py-3 font-semibold text-slate-700">Vehicle</th>
-                            <th className="text-right px-4 py-3 font-semibold text-slate-700">Distance</th>
-                            <th className="text-right px-4 py-3 font-semibold text-slate-700">Idle</th>
+                            <SortableHeader label="Distance" sortKey="distance" sort={sort} onSort={handleSort} align="right" />
+                            <SortableHeader label="Idle" sortKey="idle" sort={sort} onSort={handleSort} align="right" />
                             <th className="text-center px-4 py-3 font-semibold text-slate-700">Actions</th>
                         </tr>
                         </thead>
@@ -331,12 +443,16 @@ export function TripsPage() {
                                                 {trip.serviceTypeName}
                                             </span>
                                     </td>
-                                    <td className="px-4 py-3 text-slate-600">
-                                        {trip.importedDriverName || '-'}
-                                    </td>
-                                    <td className="px-4 py-3 font-mono text-xs">
-                                        {trip.importedVehiclePlate || '-'}
-                                    </td>
+                                    <AssignedCell
+                                        assigned={trip.assignedDriverName}
+                                        imported={trip.importedDriverName}
+                                        className="px-4 py-3 text-slate-600"
+                                    />
+                                    <AssignedCell
+                                        assigned={trip.assignedVehiclePlate}
+                                        imported={trip.importedVehiclePlate}
+                                        className="px-4 py-3 font-mono text-xs"
+                                    />
                                     <td className="px-4 py-3 text-right">
                                         {trip.distanceKm !== null ? (
                                             <span className={trip.coordinatesResolved ? 'text-green-600' : 'text-amber-600'}>

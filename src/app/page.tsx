@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 // Auth imports - useAuth will work because AuthProvider is in layout.tsx
 import { useAuth } from '@/auth/AuthContext';
@@ -59,9 +59,55 @@ function HeaderWrapper({ children }: { children: React.ReactNode }) {
     );
 }
 
+const PAGE_TITLES: Record<Page, string> = {
+    'drivers': 'Drivers',
+    'vehicle-types': 'Vehicle Types',
+    'cars': 'Cars',
+    'reports': 'Reports',
+    'settings': 'Settings',
+    'service-types': 'Service Types',
+    'vacations': 'Vacations',
+    'trips': 'Trips',
+    'bonuses': 'Bonuses',
+    'bonus-settings': 'Bonus Settings',
+    'fuel-settings': 'Fuel Settings',
+    'accounting': 'Accounting',
+    'companies': 'Companies',
+};
+
+const DEFAULT_PAGE: Page = 'reports';
+
+function pageFromHash(): Page {
+    const hash = window.location.hash.slice(1);
+    return hash in PAGE_TITLES ? hash as Page : DEFAULT_PAGE;
+}
+
+// Current page lives in the URL hash (/#trips) so refresh, Back/Forward and links work
+function useHashPage(): [Page, (page: Page) => void] {
+    const [page, setPage] = useState<Page>(pageFromHash);
+
+    useEffect(() => {
+        const onHashChange = () => setPage(pageFromHash());
+        window.addEventListener('hashchange', onHashChange);
+        return () => window.removeEventListener('hashchange', onHashChange);
+    }, []);
+
+    useEffect(() => {
+        document.title = `${PAGE_TITLES[page]} · UVT Driver Management`;
+    }, [page]);
+
+    const navigate = useCallback((next: Page) => {
+        if (window.location.hash.slice(1) === next) return;
+        // Assigning the hash pushes a history entry and fires hashchange
+        window.location.hash = next;
+    }, []);
+
+    return [page, navigate];
+}
+
 // Main authenticated app content
 function AuthenticatedApp() {
-    const [currentPage, setCurrentPage] = useState<Page>('reports');
+    const [currentPage, setCurrentPage] = useHashPage();
     const { canManage } = useAuth();
 
     const renderPage = () => {

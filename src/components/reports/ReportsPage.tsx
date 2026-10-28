@@ -259,6 +259,8 @@ export function ReportsPage() {
     // Download assignment report (Excel)
     const handleDownloadAssignments = async (periodId: number, description: string) => {
         setOpenExportMenuId(null);
+        setProcessingId(periodId);
+        setProcessingAction("export");
         try {
             const response = await authFetch(`${API_BASE_URL}/reports/export/${periodId}`);
 
@@ -279,12 +281,17 @@ export function ReportsPage() {
         } catch (error) {
             console.error("Download error:", error);
             toast.error("Download failed.");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction("");
         }
     };
 
     // Download fuel allocation report (CSV)
     const handleDownloadFuelReport = async (periodId: number, description: string) => {
         setOpenExportMenuId(null);
+        setProcessingId(periodId);
+        setProcessingAction("export");
         try {
             const response = await authFetch(`${API_BASE_URL}/gas/export-detailed/${periodId}`);
 
@@ -305,6 +312,9 @@ export function ReportsPage() {
         } catch (error) {
             console.error("Download error:", error);
             toast.error("Download failed.");
+        } finally {
+            setProcessingId(null);
+            setProcessingAction("");
         }
     };
 
@@ -702,10 +712,10 @@ export function ReportsPage() {
                                             <div className="relative" data-dropdown-export>
                                                 <button
                                                     onClick={() => setOpenExportMenuId(openExportMenuId === period.id ? null : period.id)}
-                                                    disabled={processingId === period.id && processingAction === "waybill"}
+                                                    disabled={processingId === period.id && (processingAction === "waybill" || processingAction === "export")}
                                                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors disabled:opacity-50"
                                                 >
-                                                    {processingId === period.id && processingAction === "waybill" ? (
+                                                    {processingId === period.id && (processingAction === "waybill" || processingAction === "export") ? (
                                                         <Loader2 className="w-4 h-4 animate-spin" />
                                                     ) : (
                                                         <Download className="w-4 h-4" />
