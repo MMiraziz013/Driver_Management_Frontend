@@ -36,6 +36,7 @@ import { ServiceTypesPage } from "@/components/service_types/ServiceTypesPage";
 import { DriverVacationsPage } from '@/components/drivers/DriverVacationPage';
 import {TripsPage} from "@/components/trips/TripsPage";
 import AccountingPage from '@/components/accounting/AccountingPage';
+import { AssistantPanel } from '@/components/assistant/AssistantPanel';
 
 
 // Loading component
@@ -108,6 +109,7 @@ function useHashPage(): [Page, (page: Page) => void] {
 // Main authenticated app content
 function AuthenticatedApp() {
     const [currentPage, setCurrentPage] = useHashPage();
+    const [assistantOpen, setAssistantOpen] = useState(false);
     const { canManage } = useAuth();
 
     const renderPage = () => {
@@ -145,7 +147,12 @@ function AuthenticatedApp() {
 
     return (
         <SidebarProvider>
-            <StyledSidebar currentPage={currentPage} onPageChange={setCurrentPage} />
+            <StyledSidebar
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+                assistantOpen={assistantOpen}
+                onToggleAssistant={() => setAssistantOpen((open) => !open)}
+            />
 
             <SidebarInset className="flex flex-col overflow-hidden bg-slate-50">
                 <HeaderWrapper>
@@ -160,6 +167,8 @@ function AuthenticatedApp() {
                     {renderPage()}
                 </main>
             </SidebarInset>
+
+            <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
         </SidebarProvider>
     );
 }

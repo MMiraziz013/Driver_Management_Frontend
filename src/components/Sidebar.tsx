@@ -16,8 +16,10 @@ import {
     DollarSign,
     FileSpreadsheet,
     Building2,
-    Fuel
+    Fuel,
+    Sparkles
 } from 'lucide-react';
+import { ASSISTANT_NAME } from '@/services/assistantService';
 // Import structural components and hooks from SidebarBase.tsx
 import {
     useSidebar,
@@ -38,10 +40,12 @@ export type Page = 'drivers' | 'vehicle-types' | 'cars' | 'reports'
 interface SidebarProps {
     currentPage: Page;
     onPageChange: (page: Page) => void;
+    assistantOpen?: boolean;
+    onToggleAssistant?: () => void;
 }
 
 // --- SidebarMenuContent (Re-using your original styles) ---
-function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
+function SidebarMenuContent({ currentPage, onPageChange, assistantOpen, onToggleAssistant }: SidebarProps) {
     const navItems = [
         { id: 'drivers' as Page, label: 'Drivers', icon: Users },
         { id: 'vehicle-types' as Page, label: 'Vehicle Types', icon: Truck },
@@ -100,7 +104,21 @@ function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
             </nav>
 
             {/* Footer/Settings Area */}
-            <div className="p-4 border-t border-slate-200 shrink-0">
+            <div className="p-4 border-t border-slate-200 shrink-0 space-y-1">
+                {onToggleAssistant && (
+                    <button
+                        onClick={onToggleAssistant}
+                        className={cn(
+                            'w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors text-slate-600',
+                            assistantOpen
+                                ? 'bg-indigo-50 text-indigo-600'
+                                : 'hover:bg-slate-50',
+                        )}
+                    >
+                        <Sparkles className="w-5 h-5" />
+                        <span>{ASSISTANT_NAME}</span>
+                    </button>
+                )}
                 <button
                     onClick={() => onPageChange('settings')}
                     className={cn(
@@ -119,7 +137,7 @@ function SidebarMenuContent({ currentPage, onPageChange }: SidebarProps) {
 }
 
 // --- YOUR MAIN EXPORTED SIDEBAR COMPONENT (Now correctly connected to state) ---
-export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
+export function Sidebar({ currentPage, onPageChange, assistantOpen, onToggleAssistant }: SidebarProps) {
     const isMobile = useIsMobile();
     const { openMobile, setOpenMobile } = useSidebar();
 
@@ -149,6 +167,11 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
                             onPageChange(page);
                             setOpenMobile(false);
                         }}
+                        assistantOpen={assistantOpen}
+                        onToggleAssistant={onToggleAssistant && (() => {
+                            onToggleAssistant();
+                            setOpenMobile(false);
+                        })}
                     />
                 </SheetContent>
             </Sheet>
@@ -158,7 +181,12 @@ export function Sidebar({ currentPage, onPageChange }: SidebarProps) {
     // Desktop View: Render your static sidebar
     return (
         <div className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0">
-            <SidebarMenuContent currentPage={currentPage} onPageChange={onPageChange} />
+            <SidebarMenuContent
+                currentPage={currentPage}
+                onPageChange={onPageChange}
+                assistantOpen={assistantOpen}
+                onToggleAssistant={onToggleAssistant}
+            />
         </div>
     );
 }

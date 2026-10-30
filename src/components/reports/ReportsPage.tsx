@@ -195,7 +195,7 @@ export function ReportsPage() {
     };
 
     // Resolve: retry conflicting trips on their fallback vehicle types.
-    // Reschedule: move remaining conflicting trips to the closest free day within ±3 days.
+    // Reschedule: move remaining conflicting trips to the closest free day in the period.
     const handleConflictAction = async (periodId: number, period: ReportPeriod, action: "resolve" | "reschedule") => {
         if (isPeriodFinalized(period)) {
             toast.warning("This period is already finalized. Revert finalization first.");
@@ -665,7 +665,7 @@ export function ReportsPage() {
                                                 onClick={() => handleConflictAction(period.id, period, "reschedule")}
                                                 disabled={processingId === period.id || finalized}
                                                 className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-orange-600 hover:bg-orange-50 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                title={finalized ? "Period is finalized" : "Move conflicting trips to the closest free day within ±3 days"}
+                                                title={finalized ? "Period is finalized" : "Move conflicting trips to the closest free day in the period"}
                                             >
                                                 {processingId === period.id && processingAction === "reschedule" ? (
                                                     <Loader2 className="w-4 h-4 animate-spin" />
