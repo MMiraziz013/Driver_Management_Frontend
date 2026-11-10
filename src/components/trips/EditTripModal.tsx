@@ -51,7 +51,7 @@ export function EditTripModal({ trip, token, onClose, onSuccess }: Props) {
                     fetch(`${API_BASE_URL}/vehicle-types`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     }),
-                    fetch(`${API_BASE_URL}/service-types`, {
+                    fetch(`${API_BASE_URL}/service-type`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     })
                 ]);

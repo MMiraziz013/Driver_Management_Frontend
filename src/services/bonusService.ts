@@ -172,7 +172,7 @@ export async function updateBonusSettings(dto: UpdateBonusSettingsDto, token: st
 }
 
 export async function getServiceTypeConfigs(token: string): Promise<ServiceTypeBonusConfigDto[]> {
-    const response = await fetch(`${API_BASE_URL}/bonus-settings/service-types`, {
+    const response = await fetch(`${API_BASE_URL}/bonus-settings/service-type`, {
         headers: {
             'Authorization': `Bearer ${token}`,
         },
